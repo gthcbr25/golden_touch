@@ -1,1 +1,1 @@
-print('the beginning')
+print('the begining')
