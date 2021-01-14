@@ -34,12 +34,12 @@ class Player(pygame.sprite.Sprite):
         keystate = pygame.key.get_pressed()
         self.speedx = 0
         if keystate[pygame.K_LEFT]:
-            self.speedx = -8
+            self.speedx = -10
             self.animcount += 1
             self.invert = True
         elif keystate[pygame.K_RIGHT]:
             self.invert = False
-            self.speedx = 8
+            self.speedx = 10
             self.animcount += 1
         else:
             self.animcount = 0
@@ -57,6 +57,32 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.speedx
 
 
+class Float(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = dirt_image
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h - HEIGHT + 80)
+
+
 # Создаем игру и окно
 img_dir = path.join(path.dirname(__file__), 'img')
 pygame.init()
@@ -69,8 +95,13 @@ pygame.display.set_caption("My Game")
 player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('img/pb2.png').convert(),
                pygame.image.load('img/pb3.png').convert(), pygame.image.load('img/pb4.png').convert(),
                pygame.image.load('img/pb5.png').convert()]
+dirt_image = pygame.image.load('img/dirt.png').convert()
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
+camera = Camera()
+for i in range(25):
+    dirt = Float(100 * i, 1050)
+    all_sprites.add(dirt)
 player = Player(200, 900)
 all_sprites.add(player)
 
@@ -90,6 +121,9 @@ while running:
     # Рендеринг
     screen.fill(BLACK)
     screen.blit(background, background_rect)
+    for sprite in all_sprites:
+        camera.apply(sprite)
+    camera.update(player)
     all_sprites.draw(screen)
     pygame.display.flip()
 
