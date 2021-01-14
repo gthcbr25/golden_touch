@@ -34,16 +34,16 @@ class Player(pygame.sprite.Sprite):
         keystate = pygame.key.get_pressed()
         self.speedx = 0
         if keystate[pygame.K_LEFT]:
-            self.speedx = -10
-            self.animcount += 2
+            self.speedx = -8
+            self.animcount += 1
             self.invert = True
         elif keystate[pygame.K_RIGHT]:
             self.invert = False
-            self.speedx = 10
-            self.animcount += 2
+            self.speedx = 8
+            self.animcount += 1
         else:
             self.animcount = 0
-        if self.animcount >= 30:
+        if self.animcount >= 30.00:
             self.animcount = 0
         a = self.animcount // 6
         player_img = pygame.transform.scale(self.imgs[a], (self.imgs[a].get_size()[0] * 3,
@@ -62,7 +62,8 @@ img_dir = path.join(path.dirname(__file__), 'img')
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-background = pygame.image.load(path.join(img_dir, "fon.jpg")).convert()
+background = pygame.image.load(path.join(img_dir, "fon.png")).convert()
+background = pygame.transform.scale(background, (1920, 1020))
 background_rect = background.get_rect()
 pygame.display.set_caption("My Game")
 player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('img/pb2.png').convert(),
@@ -70,7 +71,7 @@ player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('im
                pygame.image.load('img/pb5.png').convert()]
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
-player = Player(200, 500)
+player = Player(200, 900)
 all_sprites.add(player)
 
 # Цикл игры
