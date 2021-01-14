@@ -13,6 +13,8 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+LEFT = True
+RIGHT = True
 
 
 class Player(pygame.sprite.Sprite):
@@ -33,14 +35,18 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         keystate = pygame.key.get_pressed()
         self.speedx = 0
-        if keystate[pygame.K_LEFT]:
+        global LEFT, RIGHT
+        if keystate[pygame.K_LEFT] and LEFT is True:
+            print(1)
             self.speedx = -10
             self.animcount += 1
             self.invert = True
-        elif keystate[pygame.K_RIGHT]:
+            RIGHT = True
+        elif keystate[pygame.K_RIGHT] and RIGHT is True:
             self.invert = False
             self.speedx = 10
             self.animcount += 1
+            LEFT = True
         else:
             self.animcount = 0
         if self.animcount >= 30.00:
@@ -64,6 +70,15 @@ class Float(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+        self.x = x
+
+    def update(self):
+        global LEFT, RIGHT
+        if self.x == 0 and self.rect.centerx >= player.rect.centerx:
+            print(0)
+            LEFT = False
+        elif self.x == 2400 and self.rect.centerx <= player.rect.centerx:
+            RIGHT = False
 
 
 class Camera:
@@ -121,9 +136,9 @@ while running:
     # Рендеринг
     screen.fill(BLACK)
     screen.blit(background, background_rect)
+    camera.update(player)
     for sprite in all_sprites:
         camera.apply(sprite)
-    camera.update(player)
     all_sprites.draw(screen)
     pygame.display.flip()
 
