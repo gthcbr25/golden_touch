@@ -15,6 +15,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 LEFT = True
 RIGHT = True
+pygame.time.set_timer(pygame.USEREVENT + 1, 150)
 
 
 def start_screen():
@@ -63,7 +64,7 @@ class Button(pygame.sprite.Sprite):
 
 class Seller(pygame.sprite.Sprite):
     def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(all_sprites)
+        pygame.sprite.Sprite.__init__(self)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
@@ -223,13 +224,15 @@ for i in range(25):
 player = Player(200, 550)
 all_sprites.add(bashnya)
 all_sprites.add(player)
+seller_sprites = pygame.sprite.Group()
 seller = Seller(pygame.image.load('img/man2.png').convert(), 4, 1, 60, 470)
 seller1 = Seller(pygame.image.load('img/man1.png').convert(), 4, 1, 300, 470)
 seller2 = Seller(pygame.image.load('img/woman.png').convert(), 4, 1, 500, 470)
-all_sprites.add(seller)
-all_sprites.add(seller1)
-oven = Oven(20, 520)
-all_sprites.add(oven)
+seller_sprites.add(seller)
+seller_sprites.add(seller1)
+seller_sprites.add(seller2)
+oven = Oven(20, 550)
+seller_sprites.add(oven)
 start_screen()
 
 # Цикл игры
@@ -240,10 +243,10 @@ while running:
     clock.tick(FPS)
     # Ввод процесса (события)
     for event in pygame.event.get():
-        all_sprites.update()
         if event.type == pygame.QUIT:
             running = False
-    # Обновление
+        elif event.type == pygame.USEREVENT + 1:
+            seller_sprites.update()
     all_sprites.update()
     # Рендеринг
     screen.fill(BLACK)
@@ -251,7 +254,10 @@ while running:
     camera.update(player)
     for sprite in all_sprites:
         camera.apply(sprite)
+    for sprite in seller_sprites:
+        camera.apply(sprite)
     all_sprites.draw(screen)
+    seller_sprites.draw(screen)
     pygame.display.flip()
 
 pygame.quit()
