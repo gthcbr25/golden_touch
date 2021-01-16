@@ -17,6 +17,48 @@ LEFT = True
 RIGHT = True
 
 
+def start_screen():
+    fon = pygame.transform.scale(pygame.image.load('img/fon.png').convert(), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    button_sprites = pygame.sprite.Group()
+    button = Button(900, 410, 'img/button1.png')
+    button_sprites.add(button)
+    button1 = Button(900, 510, 'img/button2.png')
+    button_sprites.add(button1)
+    running = True
+    while running:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if button1.pressed(mx, my):
+                    pygame.quit()
+                    quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if button.pressed(mx, my):
+                    return
+        button_sprites.draw(screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+class Button(pygame.sprite.Sprite):
+    def __init__(self, x, y, img):
+        self.x = x
+        self.y = y
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load(f'{img}').convert(), (160, 70))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = self.x, self.y
+        self.image.set_colorkey(BLACK)
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -136,6 +178,7 @@ for i in range(25):
 player = Player(200, 900)
 all_sprites.add(bashnya)
 all_sprites.add(player)
+start_screen()
 
 # Цикл игры
 running = True
