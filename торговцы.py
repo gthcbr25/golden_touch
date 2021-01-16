@@ -15,7 +15,8 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 LEFT = True
 RIGHT = True
-pygame.time.set_timer(pygame.USEREVENT + 1, 150)
+pygame.time.set_timer(pygame.USEREVENT + 1, 900)
+pygame.time.set_timer(pygame.USEREVENT + 5, 150)
 
 
 def start_screen():
@@ -216,6 +217,7 @@ oven_imgs = [pygame.image.load('img/p2.png').convert(),
              pygame.image.load('img/p3.png').convert(), pygame.image.load('img/p4.png').convert()]
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
+oven_sprites = pygame.sprite.Group()
 camera = Camera()
 bashnya = Bashnya(700, 350)
 for i in range(25):
@@ -232,7 +234,7 @@ seller_sprites.add(seller)
 seller_sprites.add(seller1)
 seller_sprites.add(seller2)
 oven = Oven(20, 550)
-seller_sprites.add(oven)
+oven_sprites.add(oven)
 start_screen()
 
 # Цикл игры
@@ -247,6 +249,9 @@ while running:
             running = False
         elif event.type == pygame.USEREVENT + 1:
             seller_sprites.update()
+
+        elif event.type == pygame.USEREVENT + 5:
+            oven_sprites.update()
     all_sprites.update()
     # Рендеринг
     screen.fill(BLACK)
@@ -256,8 +261,11 @@ while running:
         camera.apply(sprite)
     for sprite in seller_sprites:
         camera.apply(sprite)
+    for sprite in oven_sprites:
+        camera.apply(sprite)
     all_sprites.draw(screen)
     seller_sprites.draw(screen)
+    oven_sprites.draw(screen)
     pygame.display.flip()
 
 pygame.quit()
