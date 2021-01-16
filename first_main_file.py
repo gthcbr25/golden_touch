@@ -81,6 +81,19 @@ class Float(pygame.sprite.Sprite):
             RIGHT = False
 
 
+class Bashnya(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global bash_image
+        bash_image = pygame.transform.scale(bash_image, (750, 1000))
+        self.image = bash_image
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.x = x
+
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -98,6 +111,7 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h - HEIGHT + 80)
 
 
+
 # Создаем игру и окно
 img_dir = path.join(path.dirname(__file__), 'img')
 pygame.init()
@@ -111,13 +125,16 @@ player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('im
                pygame.image.load('img/pb3.png').convert(), pygame.image.load('img/pb4.png').convert(),
                pygame.image.load('img/pb5.png').convert()]
 dirt_image = pygame.image.load('img/dirt.png').convert()
+bash_image = pygame.image.load('img/basn.png').convert()
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 camera = Camera()
+bashnya = Bashnya(1500, 450)
 for i in range(25):
     dirt = Float(100 * i, 1050)
     all_sprites.add(dirt)
 player = Player(200, 900)
+all_sprites.add(bashnya)
 all_sprites.add(player)
 
 # Цикл игры
