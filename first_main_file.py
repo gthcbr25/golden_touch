@@ -15,6 +15,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 LEFT = True
 RIGHT = True
+v_bashne = False
 
 
 def start_screen():
@@ -59,6 +60,49 @@ class Button(pygame.sprite.Sprite):
                 return True
 
 
+class Seller(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 170))
+        self.rect = self.rect.move(x, y)
+        self.image.set_colorkey(BLACK)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 170))
+        self.image.set_colorkey(BLACK)
+
+
+class Oven(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global oven_imgs
+        self.index = 0
+        self.image = pygame.transform.scale(oven_imgs[0], (200, 360))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.index += 1
+        if self.index >= len(oven_imgs):
+            self.index = 0
+        self.image = pygame.transform.scale(oven_imgs[self.index], (150, 300))
+        self.image.set_colorkey(BLACK)
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -77,9 +121,9 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         keystate = pygame.key.get_pressed()
         self.speedx = 0
+        self.speedy = 0
         global LEFT, RIGHT
         if keystate[pygame.K_LEFT] and LEFT is True:
-            print(1)
             self.speedx = -10
             self.animcount += 1
             self.invert = True
@@ -89,6 +133,8 @@ class Player(pygame.sprite.Sprite):
             self.speedx = 10
             self.animcount += 1
             LEFT = True
+        elif keystate[pygame.K_UP] and RIGHT is True:
+            pass
         else:
             self.animcount = 0
         if self.animcount >= 30.00:
@@ -103,6 +149,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.rect.x += self.speedx
+        self.rect.y += self.speedy
 
 
 class Float(pygame.sprite.Sprite):
@@ -117,7 +164,6 @@ class Float(pygame.sprite.Sprite):
     def update(self):
         global LEFT, RIGHT
         if self.x == 0 and self.rect.centerx >= player.rect.centerx:
-            print(0)
             LEFT = False
         elif self.x == 2400 and self.rect.centerx <= player.rect.centerx:
             RIGHT = False
@@ -134,6 +180,43 @@ class Bashnya(pygame.sprite.Sprite):
         self.rect.center = (x, y)
         self.x = x
 
+
+class Etaj(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global etaj_image, etaj_image2
+        etaj_image = pygame.transform.scale(etaj_image, (750, 400))
+        self.image = etaj_image
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
+class Room(pygame.sprite.Sprite):
+    def __init__(self, x, y, invert=False):
+        pygame.sprite.Sprite.__init__(self)
+        global etaj_image2
+        etaj_image3 = etaj_image2
+        etaj_image3 = pygame.transform.scale(etaj_image3, (750, 400))
+        if invert:
+            etaj_image3 = pygame.transform.flip(etaj_image3, invert, False)
+        self.image = etaj_image3
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
+class Door(pygame.sprite.Sprite):
+    def __init__(self, x, y, invert=False):
+        pygame.sprite.Sprite.__init__(self)
+        global door_image
+        door_image = door_image
+        door_image = pygame.transform.scale(door_image, (80, 130))
+        self.image = door_image
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.y = y
 
 
 class Camera:
@@ -153,11 +236,12 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h - HEIGHT + 80)
 
 
-
 # Создаем игру и окно
 img_dir = path.join(path.dirname(__file__), 'img')
 pygame.init()
 pygame.mixer.init()
+pygame.time.set_timer(pygame.USEREVENT + 1, 1500)
+pygame.time.set_timer(pygame.USEREVENT + 5, 150)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 background = pygame.image.load(path.join(img_dir, "fon.png")).convert()
 background = pygame.transform.scale(background, (1920, 1020))
@@ -168,17 +252,44 @@ player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('im
                pygame.image.load('img/pb5.png').convert()]
 dirt_image = pygame.image.load('img/dirt.png').convert()
 bash_image = pygame.image.load('img/basn.png').convert()
-clock = pygame.time.Clock()
+oven_imgs = [pygame.image.load('img/p2.png').convert(),
+             pygame.image.load('img/p3.png').convert(), pygame.image.load('img/p4.png').convert()]
+bash_image = pygame.image.load('img/basn.png').convert()
+etaj_image = pygame.image.load('img/etaj.jpg').convert()
+etaj_image2 = pygame.image.load('img/etaj_pravo.jpg').convert()
+door_image = pygame.image.load('img/door.png').convert()
 all_sprites = pygame.sprite.Group()
+oven_sprites = pygame.sprite.Group()
+land = pygame.sprite.Group()
+clock = pygame.time.Clock()
+seller_sprites = pygame.sprite.Group()
+seller = Seller(pygame.image.load('img/man2.png').convert(), 4, 1, 1100, 780)
+seller1 = Seller(pygame.image.load('img/man1.png').convert(), 4, 1, 1900, 780)
+seller2 = Seller(pygame.image.load('img/woman.png').convert(), 4, 1, 900, 780)
+seller_sprites.add(seller)
+seller_sprites.add(seller1)
+seller_sprites.add(seller2)
+oven = Oven(1050, 860)
+oven_sprites.add(oven)
+all_bashnya = pygame.sprite.Group()
 camera = Camera()
 bashnya = Bashnya(1500, 450)
 for i in range(25):
     dirt = Float(100 * i, 1050)
-    all_sprites.add(dirt)
+    land.add(dirt)
 player = Player(200, 900)
-all_sprites.add(bashnya)
+land.add(bashnya)
 all_sprites.add(player)
 start_screen()
+for i in range(-9190, 811, 400):
+    centr = Etaj(900, i)
+    prav_komnata = Room(1650, i)
+    lev_komnata = Room(150, i, True)
+    door = Door(900, i + 66)
+    all_bashnya.add(lev_komnata)
+    all_bashnya.add(prav_komnata)
+    all_bashnya.add(centr)
+    all_bashnya.add(door)
 
 # Цикл игры
 running = True
@@ -187,19 +298,65 @@ while running:
     # Держим цикл на правильной скорости
     clock.tick(FPS)
     # Ввод процесса (события)
-    for event in pygame.event.get():
+    if v_bashne is False:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.USEREVENT + 1:
+                seller_sprites.update()
+
+            elif event.type == pygame.USEREVENT + 5:
+                oven_sprites.update()
+            elif event.type == pygame.KEYDOWN:
+                keystate = pygame.key.get_pressed()
+                if keystate[pygame.K_UP]:
+                    if bashnya.rect.centerx - 200 <= player.rect.centerx <= bashnya.rect.centerx + 200:
+                        v_bashne = True
+
+
+        # Обновление
         all_sprites.update()
-        if event.type == pygame.QUIT:
-            running = False
-    # Обновление
-    all_sprites.update()
-    # Рендеринг
-    screen.fill(BLACK)
-    screen.blit(background, background_rect)
-    camera.update(player)
-    for sprite in all_sprites:
-        camera.apply(sprite)
-    all_sprites.draw(screen)
+        land.update()
+        # Рендеринг
+        screen.blit(background, background_rect)
+        camera.update(player)
+        for sprite in all_sprites:
+            camera.apply(sprite)
+        for sprite in seller_sprites:
+            camera.apply(sprite)
+        for sprite in oven_sprites:
+            camera.apply(sprite)
+        for sprite in land:
+            camera.apply(sprite)
+        oven_sprites.draw(screen)
+        land.draw(screen)
+        seller_sprites.draw(screen)
+        all_sprites.draw(screen)
+    else:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                keystate = pygame.key.get_pressed()
+                if keystate[pygame.K_UP]:
+                    player.rect.centery -= 400
+                elif keystate[pygame.K_DOWN]:
+                    if door.y == 876 and door.rect.centerx - 20 <= player.rect.centerx <= door.rect.centerx + 20:
+                        v_bashne = False
+                    elif door.rect.centerx - 20 <= player.rect.centerx <= door.rect.centerx + 20:
+                        player.rect.centery += 400
+        all_sprites.update()
+        all_bashnya.update()
+        # Рендеринг
+        screen.blit(background, background_rect)
+        camera.update(player)
+        for sprite in all_sprites:
+            camera.apply(sprite)
+        for sprite in all_bashnya:
+            camera.apply(sprite)
+        all_bashnya.draw(screen)
+        all_sprites.draw(screen)
+
     pygame.display.flip()
 
 pygame.quit()
