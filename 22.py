@@ -272,6 +272,32 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h - HEIGHT + 80)
 
 
+class Monsters(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = pygame.transform.scale(self.frames[self.cur_frame], (400, 400))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = x, y
+        self.image.set_colorkey(BLACK)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = pygame.transform.scale(self.frames[self.cur_frame], (400, 400))
+        self.image.set_colorkey(BLACK)
+
+
 # Создаем игру и окно
 img_dir = path.join(path.dirname(__file__), 'img')
 pygame.init()
@@ -307,6 +333,7 @@ seller2 = Seller(pygame.image.load('img/woman.png').convert(), 4, 1, 900, 780)
 seller_sprites.add(seller)
 seller_sprites.add(seller1)
 seller_sprites.add(seller2)
+monsters = pygame.sprite.Group()
 oven = Oven(1050, 860)
 oven_sprites.add(oven)
 all_bashnya = pygame.sprite.Group()
@@ -315,11 +342,16 @@ bashnya = Bashnya(1500, 450)
 for i in range(25):
     dirt = Float(100 * i, 1050)
     land.add(dirt)
+for i in range(-3, 6):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600 * j, 270 -400 * i)
+        monsters.add(monster)
 player = Player(200, 900)
 land.add(bashnya)
 all_sprites.add(player)
 start_screen()
 for i in range(-9190, 811, 400):
+    print(i)
     centr = Etaj(900, i)
     prav_komnata = Room(1650, i)
     lev_komnata = Room(150, i, True)
@@ -396,6 +428,8 @@ while running:
                         v_bashne = False
                     elif door.rect.centerx - 20 <= player.rect.centerx <= door.rect.centerx + 20:
                         player.rect.centery += 400
+            elif event.type == pygame.USEREVENT + 5:
+                monsters.update()
         all_sprites.update()
         all_bashnya.update()
         # Рендеринг
@@ -405,8 +439,11 @@ while running:
             camera.apply(sprite)
         for sprite in all_bashnya:
             camera.apply(sprite)
+        for sprite in monsters:
+            camera.apply(sprite)
         all_bashnya.draw(screen)
         all_sprites.draw(screen)
+        monsters.draw(screen)
 
     pygame.display.flip()
 
