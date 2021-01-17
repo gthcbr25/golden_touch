@@ -2,6 +2,7 @@ import pygame
 import random
 import os
 from os import path
+import sqlite3
 
 WIDTH = 1920
 HEIGHT = 1020
@@ -13,6 +14,9 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+LEFT = True
+RIGHT = True
+name1 = ''
 
 
 class Player(pygame.sprite.Sprite):
@@ -33,14 +37,17 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         keystate = pygame.key.get_pressed()
         self.speedx = 0
-        if keystate[pygame.K_LEFT]:
+        global LEFT, RIGHT
+        if keystate[pygame.K_LEFT] and LEFT is True:
             self.speedx = -10
             self.animcount += 1
             self.invert = True
-        elif keystate[pygame.K_RIGHT]:
+            RIGHT = True
+        elif keystate[pygame.K_RIGHT] and RIGHT is True:
             self.invert = False
             self.speedx = 10
             self.animcount += 1
+            LEFT = True
         else:
             self.animcount = 0
         if self.animcount >= 30.00:
@@ -64,6 +71,15 @@ class Float(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+        self.x = x
+
+    def update(self):
+        global LEFT, RIGHT
+        if self.x == 0 and self.rect.centerx >= player.rect.centerx:
+            print(0)
+            LEFT = False
+        elif self.x == 2400 and self.rect.centerx <= player.rect.centerx:
+            RIGHT = False
 
 
 class Camera:
@@ -83,8 +99,40 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h - HEIGHT + 80)
 
 
-class Weapon:
-    pass
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self, x, y, name):
+        global name1
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((50, 50))
+        self.image.fill(GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        name1 = name
+
+
+class Youweapon(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        global name1
+        global youweapon
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def podobr(self):
+        global youweapon
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        result = cur.execute(f'SELECT picture FROM Weapon WHERE name LIKE "{name1}"').fetchall()
+        for elem in result:
+            youweapon = elem[0]
+            print(youweapon)
+        con.close()
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 500
+        self.image = pygame.image.load(f'{youweapon}').convert()
 
 
 # Создаем игру и окно
@@ -100,6 +148,7 @@ player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('im
                pygame.image.load('img/pb3.png').convert(), pygame.image.load('img/pb4.png').convert(),
                pygame.image.load('img/pb5.png').convert()]
 dirt_image = pygame.image.load('img/dirt.png').convert()
+youweapon = 'img/Gold corty.png'
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 camera = Camera()
@@ -108,7 +157,11 @@ for i in range(25):
     all_sprites.add(dirt)
 player = Player(200, 900)
 all_sprites.add(player)
-
+weapon = Weapon(500, 900, 'bronze')
+all_sprites.add(weapon)
+uweapon = Youweapon(200, 200)
+all_sprites.add(uweapon)
+check_weapon = False
 # Цикл игры
 running = True
 left = False
@@ -120,14 +173,23 @@ while running:
         all_sprites.update()
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
+                    if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
+                        check_weapon = True
+
     # Обновление
     all_sprites.update()
+    if check_weapon:
+        uweapon.podobr()
+        check_weapon = False
     # Рендеринг
     screen.fill(BLACK)
     screen.blit(background, background_rect)
+    camera.update(player)
     for sprite in all_sprites:
         camera.apply(sprite)
-    camera.update(player)
     all_sprites.draw(screen)
     pygame.display.flip()
 
