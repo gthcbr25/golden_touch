@@ -3,6 +3,7 @@ import pygame
 import random
 import os
 from os import path
+from random import choice
 
 WIDTH = 1920
 HEIGHT = 1020
@@ -209,8 +210,43 @@ class Room(pygame.sprite.Sprite):
         self.rect.center = (x, y)
 
 
+class Yachik(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global yachik_imgs
+        yachik_img = random.choice(yachik_imgs)
+        yachik_img = pygame.transform.scale(yachik_img, (75, 40))
+        self.image = yachik_img
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
+class Bochka(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global bochka_img
+        bochka_img = pygame.transform.scale(bochka_img, (75, 70))
+        self.image = bochka_img
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
+class Chest(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global chest_imgs
+        chest_img = random.choice(chest_imgs)
+        yachik_img = pygame.transform.scale(chest_img, (75, 40))
+        self.image = yachik_img
+        self.image.set_colorkey(MEBEL)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+
 class Door(pygame.sprite.Sprite):
-    def __init__(self, x, y, invert=False):
+    def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         global door_image
         door_image = door_image
@@ -289,7 +325,13 @@ pygame.display.set_caption("My Game")
 player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('img/pb2.png').convert(),
                pygame.image.load('img/pb3.png').convert(), pygame.image.load('img/pb4.png').convert(),
                pygame.image.load('img/pb5.png').convert()]
+yachik_imgs = [pygame.image.load('img/yachik2.jpg').convert(), pygame.image.load('img/yachik3.jpg').convert(),
+               pygame.image.load('img/yachik4.jpg').convert()]
+chest_imgs = [pygame.image.load('img/sword_chest.jpg').convert(),
+              pygame.image.load('img/armor_chest.jpg').convert(),
+              pygame.image.load('img/amulet_chest.jpg').convert()]
 dirt_image = pygame.image.load('img/dirt.png').convert()
+bochka_img = pygame.image.load('img/bochka.jpg').convert()
 bash_image = pygame.image.load('img/basn.png').convert()
 oven_imgs = [pygame.image.load('img/p2.png').convert(),
              pygame.image.load('img/p3.png').convert(), pygame.image.load('img/p4.png').convert()]
@@ -323,14 +365,41 @@ start_screen()
 for i in range(-9190, 811, 400):
     centr = Etaj(900, i)
     prav_komnata = Room(1650, i)
-    lev_komnata = Room(150, i, True)
-    door = Door(900, i + 66)
-    all_bashnya.add(lev_komnata)
+    x = 1650
+    y = i
     all_bashnya.add(prav_komnata)
+    if random.choice([False, True, False]):
+        chest = Chest(x + 170, y + 110)
+        all_bashnya.add(chest)
+    if random.choice([False, True]):
+        bochka = Bochka(x + 90, y + 96)
+        all_bashnya.add(bochka)
+    if random.choice([False, True]):
+        yachik = Yachik(x, y + 115)
+        all_bashnya.add(yachik)
+    if random.choice([False, True]):
+        yachik2 = Yachik(x - 75, y + 115)
+        all_bashnya.add(yachik2)
+    lev_komnata = Room(150, i, True)
+    all_bashnya.add(lev_komnata)
+    x = 150
+    if random.choice([False, True]):
+        chest = Chest(x - 170, y + 110)
+        all_bashnya.add(chest)
+    if random.choice([False, True]):
+        bochka = Bochka(x - 90, y + 96)
+        all_bashnya.add(bochka)
+    if random.choice([False, True]):
+        yachik = Yachik(x, y + 115)
+        all_bashnya.add(yachik)
+    if random.choice([False, True]):
+        yachik2 = Yachik(x + 75, y + 115)
+        all_bashnya.add(yachik2)
+    door = Door(900, i + 66)
+
     all_bashnya.add(centr)
     all_bashnya.add(door)
 weapon = Weapon(500, 900, 'bronze')
-all_sprites.add(weapon)
 uweapon = Youweapon(200, 200)
 all_sprites.add(uweapon)
 check_weapon = False
@@ -404,9 +473,6 @@ while running:
                             check_weapon = True
         all_sprites.update()
         all_bashnya.update()
-        if check_weapon:
-            uweapon.podobr()
-            check_weapon = False
         # Рендеринг
         screen.blit(background, background_rect)
         camera.update(player)
@@ -416,6 +482,9 @@ while running:
             camera.apply(sprite)
         all_bashnya.draw(screen)
         all_sprites.draw(screen)
+        if check_weapon:
+            uweapon.podobr()
+            check_weapon = False
 
     pygame.display.flip()
 
