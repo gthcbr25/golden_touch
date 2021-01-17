@@ -88,6 +88,12 @@ class Seller(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 170))
         self.image.set_colorkey(BLACK)
 
+    def pressed(self, pos):
+        mx, my = pos
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
 
 class Words(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -526,21 +532,23 @@ while running:
                 if event.key == pygame.K_e:
                     if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
                         if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
-                            print(0)
                             check_weapon = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if seller.pressed(pygame.mouse.get_pos()):
                     a = 0
                     word = Words(seller.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
                     seller_sprites.add(word)
+                    print(0)
                 elif seller1.pressed(pygame.mouse.get_pos()):
                     a = 1
                     word1 = Words(seller1.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
                     seller_sprites.add(word1)
+                    print(1)
                 elif seller2.pressed(pygame.mouse.get_pos()):
                     a = 2
                     word2 = Words(seller2.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
                     seller_sprites.add(word2)
+                    print(2)
 
         # Обновление
         all_sprites.update()
