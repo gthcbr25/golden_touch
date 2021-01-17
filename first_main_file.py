@@ -89,6 +89,33 @@ class Seller(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
 
 
+class Words(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global words_imgs
+        if a == 0:
+            self.image = pygame.transform.scale(words_imgs[0], (650, 500))
+            self.image.set_colorkey(WHITE)
+            self.rect = self.image.get_rect()
+            self.rect.topleft = x, y
+        if a == 1:
+            self.image = pygame.transform.scale(words_imgs[1], (650, 500))
+            self.image.set_colorkey(WHITE)
+            self.rect = self.image.get_rect()
+            self.rect.topleft = x, y
+        if a == 2:
+            self.image = pygame.transform.scale(words_imgs[2], (650, 500))
+            self.image.set_colorkey(WHITE)
+            self.rect = self.image.get_rect()
+            self.rect.topleft = x, y
+
+    def pressed(self, pos):
+        mx, my = pos
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
 class Oven(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -294,6 +321,50 @@ class Youweapon(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
 
 
+class Boss(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global boss_imgs
+        self.index = 0
+        self.image = pygame.transform.scale(boss_imgs[0], (400, 360))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.index += 1
+        if self.index >= len(boss_imgs):
+            self.index = 0
+        self.image = pygame.transform.scale(boss_imgs[self.index], (400, 300))
+        self.image.set_colorkey(BLACK)
+
+
+class Monsters(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = pygame.transform.scale(self.frames[self.cur_frame], (400, 400))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = x, y
+        self.image.set_colorkey(BLACK)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = pygame.transform.scale(self.frames[self.cur_frame], (400, 400))
+        self.image.set_colorkey(BLACK)
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -331,6 +402,13 @@ chest_imgs = [pygame.image.load('img/sword_chest.jpg').convert(),
               pygame.image.load('img/armor_chest.jpg').convert(),
               pygame.image.load('img/amulet_chest.jpg').convert()]
 dirt_image = pygame.image.load('img/dirt.png').convert()
+words_imgs = [pygame.image.load('img/word.png').convert(),
+              pygame.image.load('img/word1.png').convert(), pygame.image.load('img/word2.png').convert()]
+boss_imgs = [pygame.image.load('img/boss1.png').convert(), pygame.image.load('img/boss2.png').convert(),
+             pygame.image.load('img/boss3.png').convert(), pygame.image.load('img/boss4.png').convert(),
+             pygame.image.load('img/boss5.png').convert(), pygame.image.load('img/boss6.png').convert(),
+             pygame.image.load('img/boss7.png').convert(), pygame.image.load('img/boss8.png').convert(),
+             pygame.image.load('img/boss9.png').convert(), pygame.image.load('img/boss10.png').convert()]
 bochka_img = pygame.image.load('img/bochka.jpg').convert()
 bash_image = pygame.image.load('img/basn.png').convert()
 oven_imgs = [pygame.image.load('img/p2.png').convert(),
@@ -350,6 +428,7 @@ seller2 = Seller(pygame.image.load('img/woman.png').convert(), 4, 1, 900, 780)
 seller_sprites.add(seller)
 seller_sprites.add(seller1)
 seller_sprites.add(seller2)
+monsters = pygame.sprite.Group()
 oven = Oven(1050, 860)
 oven_sprites.add(oven)
 all_bashnya = pygame.sprite.Group()
@@ -359,6 +438,24 @@ bashnya = Bashnya(1500, 450)
 for i in range(25):
     dirt = Float(100 * i, 1050)
     land.add(dirt)
+for i in range(-3, 6):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
+for i in range(6, 12):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
+for i in range(12, 18):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
+for i in range(18, 24):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
+boss = Boss(800, -9155)
+monsters.add(boss)
 player = Player(200, 900)
 land.add(bashnya)
 start_screen()
@@ -431,6 +528,19 @@ while running:
                         if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
                             print(0)
                             check_weapon = True
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if seller.pressed(pygame.mouse.get_pos()):
+                    a = 0
+                    word = Words(seller.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    seller_sprites.add(word)
+                elif seller1.pressed(pygame.mouse.get_pos()):
+                    a = 1
+                    word1 = Words(seller1.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    seller_sprites.add(word1)
+                elif seller2.pressed(pygame.mouse.get_pos()):
+                    a = 2
+                    word2 = Words(seller2.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    seller_sprites.add(word2)
 
         # Обновление
         all_sprites.update()
@@ -471,6 +581,8 @@ while running:
                     if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
                         if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
                             check_weapon = True
+            elif event.type == pygame.USEREVENT + 5:
+                monsters.update()
         all_sprites.update()
         all_bashnya.update()
         # Рендеринг
@@ -480,7 +592,10 @@ while running:
             camera.apply(sprite)
         for sprite in all_bashnya:
             camera.apply(sprite)
+        for sprite in monsters:
+            camera.apply(sprite)
         all_bashnya.draw(screen)
+        monsters.draw(screen)
         all_sprites.draw(screen)
         if check_weapon:
             uweapon.podobr()
