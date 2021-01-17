@@ -1,3 +1,4 @@
+import sqlite3
 import pygame
 import random
 import os
@@ -13,6 +14,8 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+MEBEL = (17, 15, 39)
+GREY = (155, 173, 183)
 LEFT = True
 RIGHT = True
 v_bashne = False
@@ -219,6 +222,42 @@ class Door(pygame.sprite.Sprite):
         self.y = y
 
 
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self, x, y, name):
+        global name1
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((50, 50))
+        self.image.fill(GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        name1 = name
+
+
+class Youweapon(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        global name1
+        global youweapon
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def podobr(self):
+        global youweapon
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        result = cur.execute(f'SELECT picture FROM Weapon WHERE name LIKE "{name1}"').fetchall()
+        for elem in result:
+            youweapon = elem[0]
+        con.close()
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 500
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.image.set_colorkey(BLACK)
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -273,13 +312,13 @@ oven = Oven(1050, 860)
 oven_sprites.add(oven)
 all_bashnya = pygame.sprite.Group()
 camera = Camera()
+youweapon = 'img/Gold corty.png'
 bashnya = Bashnya(1500, 450)
 for i in range(25):
     dirt = Float(100 * i, 1050)
     land.add(dirt)
 player = Player(200, 900)
 land.add(bashnya)
-all_sprites.add(player)
 start_screen()
 for i in range(-9190, 811, 400):
     centr = Etaj(900, i)
@@ -290,6 +329,12 @@ for i in range(-9190, 811, 400):
     all_bashnya.add(prav_komnata)
     all_bashnya.add(centr)
     all_bashnya.add(door)
+weapon = Weapon(500, 900, 'bronze')
+all_sprites.add(weapon)
+uweapon = Youweapon(200, 200)
+all_sprites.add(uweapon)
+check_weapon = False
+all_sprites.add(player)
 
 # Цикл игры
 running = True
@@ -312,11 +357,18 @@ while running:
                 if keystate[pygame.K_UP]:
                     if bashnya.rect.centerx - 200 <= player.rect.centerx <= bashnya.rect.centerx + 200:
                         v_bashne = True
-
+                if event.key == pygame.K_e:
+                    if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
+                        if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
+                            print(0)
+                            check_weapon = True
 
         # Обновление
         all_sprites.update()
         land.update()
+        if check_weapon:
+            uweapon.podobr()
+            check_weapon = False
         # Рендеринг
         screen.blit(background, background_rect)
         camera.update(player)
@@ -338,15 +390,23 @@ while running:
                 running = False
             elif event.type == pygame.KEYDOWN:
                 keystate = pygame.key.get_pressed()
-                if keystate[pygame.K_UP]:
+                if keystate[pygame.K_UP] and door.rect.centerx - 20 <= player.rect.centerx <= door.rect.centerx + 20:
                     player.rect.centery -= 400
                 elif keystate[pygame.K_DOWN]:
-                    if door.y == 876 and door.rect.centerx - 20 <= player.rect.centerx <= door.rect.centerx + 20:
-                        v_bashne = False
-                    elif door.rect.centerx - 20 <= player.rect.centerx <= door.rect.centerx + 20:
-                        player.rect.centery += 400
+                    if door.rect.centerx - 20 <= player.rect.centerx <= door.rect.centerx + 20:
+                        if door.rect.centery == 876 and door.y == 876:
+                            v_bashne = False
+                        else:
+                            player.rect.centery += 400
+                elif event.key == pygame.K_e:
+                    if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
+                        if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
+                            check_weapon = True
         all_sprites.update()
         all_bashnya.update()
+        if check_weapon:
+            uweapon.podobr()
+            check_weapon = False
         # Рендеринг
         screen.blit(background, background_rect)
         camera.update(player)

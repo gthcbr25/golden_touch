@@ -1,20 +1,15 @@
 import pygame
 import random
 import os
-from os import path
-WIDTH = 920
-HEIGHT = 620
-FPS = 30
-# Задаем цвета
-import pygame
-import random
-import os
+import sqlite3
 from os import path
 
 WIDTH = 920
 HEIGHT = 620
-FPS = 30
 
+WIDTH = 1920
+HEIGHT = 1020
+FPS = 30
 # Задаем цвета
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -23,95 +18,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 LEFT = True
 RIGHT = True
-pygame.time.set_timer(pygame.USEREVENT + 1, 900)
-pygame.time.set_timer(pygame.USEREVENT + 5, 150)
-
-
-def start_screen():
-    fon = pygame.transform.scale(pygame.image.load('img/fon.png').convert(), (WIDTH, HEIGHT))
-    screen.blit(fon, (0, 0))
-    button_sprites = pygame.sprite.Group()
-    button = Button(350, 100, 'img/button1.png')
-    button_sprites.add(button)
-    button1 = Button(350, 200, 'img/button2.png')
-    button_sprites.add(button1)
-    running = True
-    while running:
-        events = pygame.event.get()
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if button1.pressed(pygame.mouse.get_pos()):
-                    pygame.quit()
-                    quit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if button.pressed(pygame.mouse.get_pos()):
-                    return
-            elif event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-        button_sprites.draw(screen)
-        pygame.display.flip()
-        clock.tick(FPS)
-
-
-class Button(pygame.sprite.Sprite):
-    def __init__(self, x, y, img):
-        self.x = x
-        self.y = y
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(pygame.image.load(f'{img}').convert(), (160, 70))
-        self.rect = self.image.get_rect()
-        self.rect.topleft = self.x, self.y
-        self.image.set_colorkey(BLACK)
-
-    def pressed(self, pos):
-        mx, my = pos
-        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
-            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
-                return True
-
-
-class Seller(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 170))
-        self.rect = self.rect.move(x, y)
-        self.image.set_colorkey(BLACK)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
-
-    def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 170))
-        self.image.set_colorkey(BLACK)
-
-
-class Oven(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        global oven_imgs
-        self.index = 0
-        self.image = pygame.transform.scale(oven_imgs[0], (100, 180))
-        self.image.set_colorkey(BLACK)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-
-    def update(self):
-        self.index += 1
-        if self.index >= len(oven_imgs):
-            self.index = 0
-        self.image = pygame.transform.scale(oven_imgs[self.index], (100, 180))
-        self.image.set_colorkey(BLACK)
+name1 = ''
 
 
 class Player(pygame.sprite.Sprite):
@@ -177,18 +84,6 @@ class Float(pygame.sprite.Sprite):
             RIGHT = False
 
 
-class Bashnya(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        global bash_image
-        bash_image = pygame.transform.scale(bash_image, (750, 500))
-        self.image = bash_image
-        self.image.set_colorkey(WHITE)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.x = x
-
-
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -206,44 +101,70 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h - HEIGHT + 80)
 
 
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self, x, y, name):
+        global name1
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((50, 50))
+        self.image.fill(GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        name1 = name
+
+
+class Youweapon(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        global name1
+        global youweapon
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def podobr(self):
+        global youweapon
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        result = cur.execute(f'SELECT picture FROM Weapon WHERE name LIKE "{name1}"').fetchall()
+        for elem in result:
+            youweapon = elem[0]
+        con.close()
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 500
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.image.set_colorkey(BLACK)
+
+
 # Создаем игру и окно
 img_dir = path.join(path.dirname(__file__), 'img')
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 background = pygame.image.load(path.join(img_dir, "fon.png")).convert()
-background = pygame.transform.scale(background, (920, 620))
+background = pygame.transform.scale(background, (1920, 1020))
 background_rect = background.get_rect()
 pygame.display.set_caption("My Game")
 player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('img/pb2.png').convert(),
                pygame.image.load('img/pb3.png').convert(), pygame.image.load('img/pb4.png').convert(),
                pygame.image.load('img/pb5.png').convert()]
 dirt_image = pygame.image.load('img/dirt.png').convert()
-bash_image = pygame.image.load('img/basn.png').convert()
-oven_imgs = [pygame.image.load('img/p2.png').convert(),
-             pygame.image.load('img/p3.png').convert(), pygame.image.load('img/p4.png').convert()]
+youweapon = 'img/Gold corty.png'
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
-oven_sprites = pygame.sprite.Group()
 camera = Camera()
-bashnya = Bashnya(700, 350)
 for i in range(25):
-    dirt = Float(100 * i, 650)
+    dirt = Float(100 * i, 1050)
     all_sprites.add(dirt)
-player = Player(200, 550)
-all_sprites.add(bashnya)
+player = Player(200, 900)
 all_sprites.add(player)
-seller_sprites = pygame.sprite.Group()
-seller = Seller(pygame.image.load('img/man2.png').convert(), 4, 1, 60, 470)
-seller1 = Seller(pygame.image.load('img/man1.png').convert(), 4, 1, 300, 470)
-seller2 = Seller(pygame.image.load('img/woman.png').convert(), 4, 1, 500, 470)
-seller_sprites.add(seller)
-seller_sprites.add(seller1)
-seller_sprites.add(seller2)
-oven = Oven(20, 550)
-oven_sprites.add(oven)
-start_screen()
 
+weapon = Weapon(500, 900, 'bronze')
+all_sprites.add(weapon)
+uweapon = Youweapon(200, 200)
+all_sprites.add(uweapon)
+check_weapon = False
 # Цикл игры
 running = True
 left = False
@@ -252,27 +173,27 @@ while running:
     clock.tick(FPS)
     # Ввод процесса (события)
     for event in pygame.event.get():
+        all_sprites.update()
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.USEREVENT + 1:
-            seller_sprites.update()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
+                    if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
+                        check_weapon = True
 
-        elif event.type == pygame.USEREVENT + 5:
-            oven_sprites.update()
+    # Обновление
     all_sprites.update()
+    if check_weapon:
+        uweapon.podobr()
+        check_weapon = False
     # Рендеринг
     screen.fill(BLACK)
     screen.blit(background, background_rect)
     camera.update(player)
     for sprite in all_sprites:
         camera.apply(sprite)
-    for sprite in seller_sprites:
-        camera.apply(sprite)
-    for sprite in oven_sprites:
-        camera.apply(sprite)
     all_sprites.draw(screen)
-    seller_sprites.draw(screen)
-    oven_sprites.draw(screen)
     pygame.display.flip()
 
 pygame.quit()
