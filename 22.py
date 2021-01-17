@@ -126,7 +126,7 @@ class Oven(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         global oven_imgs
         self.index = 0
-        self.image = pygame.transform.scale(oven_imgs[0], (200, 360))
+        self.image = pygame.transform.scale(oven_imgs[0], (150, 360))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -138,6 +138,23 @@ class Oven(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(oven_imgs[self.index], (150, 300))
         self.image.set_colorkey(BLACK)
 
+
+class Boss(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        global boss_imgs
+        self.index = 0
+        self.image = pygame.transform.scale(boss_imgs[0], (400, 360))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.index += 1
+        if self.index >= len(boss_imgs):
+            self.index = 0
+        self.image = pygame.transform.scale(boss_imgs[self.index], (400, 300))
+        self.image.set_colorkey(BLACK)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -322,6 +339,11 @@ etaj_image2 = pygame.image.load('img/etaj_pravo.jpg').convert()
 door_image = pygame.image.load('img/door.png').convert()
 words_imgs = [pygame.image.load('img/word.png').convert(),
              pygame.image.load('img/word1.png').convert(), pygame.image.load('img/word2.png').convert()]
+boss_imgs = [pygame.image.load('img/boss1.png').convert(), pygame.image.load('img/boss2.png').convert(),
+               pygame.image.load('img/boss3.png').convert(), pygame.image.load('img/boss4.png').convert(),
+               pygame.image.load('img/boss5.png').convert(), pygame.image.load('img/boss6.png').convert(),
+             pygame.image.load('img/boss7.png').convert(), pygame.image.load('img/boss8.png').convert(),
+             pygame.image.load('img/boss9.png').convert(), pygame.image.load('img/boss10.png').convert()]
 all_sprites = pygame.sprite.Group()
 oven_sprites = pygame.sprite.Group()
 land = pygame.sprite.Group()
@@ -346,6 +368,20 @@ for i in range(-3, 6):
     for j in range(3):
         monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600 * j, 270 -400 * i)
         monsters.add(monster)
+for i in range(6, 12):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 600 * j, 270 -400 * i)
+        monsters.add(monster)
+for i in range(12, 18):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 600 * j, 270 -400 * i)
+        monsters.add(monster)
+for i in range(18, 24):
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600 * j, 270 -400 * i)
+        monsters.add(monster)
+boss = Boss(800, -9155)
+monsters.add(boss)
 player = Player(200, 900)
 land.add(bashnya)
 all_sprites.add(player)
