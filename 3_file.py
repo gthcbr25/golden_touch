@@ -53,6 +53,7 @@ def start_screen():
 def give_drop():
     global drop
     global dropp
+    global dddrop
     if drop:
         sp = ['bronze', 'золотой меч', 'алмазный меч']
         d = choice(sp)
@@ -660,18 +661,20 @@ while running:
                         if player.rect.centery - 100 < chest.rect.centery < player.rect.centery + 100:
                             give_drop()
                             drop = True
-                            if event.type == pygame.KEYDOWN:
-                                keystate = pygame.key.get_pressed()
-                                if keystate[pygame.K_f]:
-                                    print(222222)
-                                    print('hheheheyh')
-                                    check_weapon = True
-                                    inventory_sprites.update()
+                elif event.key == pygame.K_f:
+                    if drop:
+                        print(222222)
+                        print('hheheheyh')
+                        check_weapon = True
+                        inventory_sprites.update()
             elif event.type == pygame.USEREVENT + 5:
                 monsters.update()
         if check_weapon:
+            global dddrop
             uweapon.podobr()
             inventory_sprites.update()
+            dddrop.kill()
+            drop_sprites.update()
             check_weapon = False
         all_sprites.update()
         all_bashnya.update()
@@ -685,6 +688,8 @@ while running:
         for sprite in all_bashnya:
             camera.apply(sprite)
         for sprite in monsters:
+            camera.apply(sprite)
+        for sprite in drop_sprites:
             camera.apply(sprite)
         all_bashnya.draw(screen)
         monsters.draw(screen)
