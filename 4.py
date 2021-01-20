@@ -22,6 +22,7 @@ RIGHT = True
 v_bashne = False
 
 
+
 def start_screen():
     fon = pygame.transform.scale(pygame.image.load('img/fon.png').convert(), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
@@ -44,6 +45,19 @@ def start_screen():
                 if button.pressed(mx, my):
                     return
         button_sprites.draw(screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def shop():
+    fon = pygame.transform.scale(pygame.image.load('img/shop.jpg').convert(), (500, 400))
+    screen.blit(fon, (500, 250))
+    running = True
+    while running:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                return
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -101,20 +115,20 @@ class Words(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         global words_imgs
         if a == 0:
-            self.image = pygame.transform.scale(words_imgs[0], (650, 500))
+            self.image = pygame.transform.scale(words_imgs[0], (150, 90))
             self.image.set_colorkey(WHITE)
             self.rect = self.image.get_rect()
-            self.rect.topleft = x, y
+            self.rect.center = (x, y)
         if a == 1:
-            self.image = pygame.transform.scale(words_imgs[1], (650, 500))
+            self.image = pygame.transform.scale(words_imgs[1], (150, 90))
             self.image.set_colorkey(WHITE)
             self.rect = self.image.get_rect()
-            self.rect.topleft = x, y
+            self.rect.center = (x, y)
         if a == 2:
-            self.image = pygame.transform.scale(words_imgs[2], (650, 500))
+            self.image = pygame.transform.scale(words_imgs[2], (150, 90))
             self.image.set_colorkey(WHITE)
             self.rect = self.image.get_rect()
-            self.rect.topleft = x, y
+            self.rect.center = (x, y)
 
     def pressed(self, pos):
         mx, my = pos
@@ -372,6 +386,21 @@ class Monsters(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
 
 
+class Coins(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('img/money.jpg').convert(), (200, 45))
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        print(1)
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 700
+        self.image.set_colorkey(WHITE)
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -507,7 +536,9 @@ weapon = Weapon(500, 900, 'bronze')
 uweapon = Youweapon(200, 200)
 all_sprites.add(uweapon)
 check_weapon = False
+coin = Coins(300, 0)
 all_sprites.add(player)
+all_sprites.add(coin)
 
 # Цикл игры
 running = True
@@ -537,19 +568,23 @@ while running:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if seller.pressed(pygame.mouse.get_pos()):
                     a = 0
-                    word = Words(seller.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word = Words(seller.rect.centerx, seller.rect.centery - 60)
                     seller_sprites.add(word)
-                    print(0)
+                    if word.pressed(pygame.mouse.get_pos()):
+                        shop()
                 elif seller1.pressed(pygame.mouse.get_pos()):
                     a = 1
-                    word1 = Words(seller1.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word1 = Words(seller1.rect.centerx, seller1.rect.centery - 60)
                     seller_sprites.add(word1)
-                    print(1)
+                    if word1.pressed(pygame.mouse.get_pos()):
+                        shop()
                 elif seller2.pressed(pygame.mouse.get_pos()):
                     a = 2
-                    word2 = Words(seller2.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word2 = Words(seller2.rect.centerx, seller2.rect.centery - 60)
                     seller_sprites.add(word2)
-                    print(2)
+                    if word2.pressed(pygame.mouse.get_pos()):
+                        shop()
+
 
         # Обновление
         all_sprites.update()
