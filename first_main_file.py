@@ -63,6 +63,45 @@ def start_screen():
         clock.tick(FPS)
 
 
+def death_screen():
+    fon = pygame.transform.scale(pygame.image.load('img/fon.png').convert(), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    button_sprites = pygame.sprite.Group()
+    button1 = Button(900, 510, 'img/button2.png')
+    button_sprites.add(button1)
+    running = True
+    while running:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if button1.pressed(mx, my):
+                    pygame.quit()
+                    quit()
+        button_sprites.draw(screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def win_screen():
+    button_sprites = pygame.sprite.Group()
+    button1 = Button(900, 510, 'img/button2.png')
+    button_sprites.add(button1)
+    running = True
+    while running:
+        screen.fill((0, 0, 0))
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if button1.pressed(mx, my):
+                    pygame.quit()
+                    quit()
+        button_sprites.draw(screen)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
 def draw_text(surf, text, size, x, y):
     font_name = pygame.font.match_font('arial')
     font = pygame.font.Font(font_name, size)
@@ -78,6 +117,41 @@ class Heart(pygame.sprite.Sprite):
         self.y = y
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(pygame.image.load('img/live.png').convert(), (200, 60))
+        self.image.set_colorkey((70, 70, 70))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = self.x, self.y
+        self.image.set_colorkey(BLACK)
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
+class Shield(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('img/shield_iqon.jpg').convert(), (80, 50))
+        self.rect = self.image.get_rect()
+        self.image.set_colorkey((70, 70, 70))
+        self.rect.topleft = self.x, self.y
+        self.image.set_colorkey(BLACK)
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
+class Sword(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('img/atack_iqon.jpg').convert(), (80, 50))
+        self.image.set_colorkey((70, 70, 70))
         self.rect = self.image.get_rect()
         self.rect.topleft = self.x, self.y
         self.image.set_colorkey(BLACK)
@@ -97,7 +171,21 @@ def shop(a):
     if a == 1:
         heart = Heart(850, 480)
         shops.add(heart)
-        draw_text(screen, 'вылечиться:', 18, 880, 450)
+        draw_text(screen, 'вылечиться до 100:', 18, 880, 450)
+    elif a == 0:
+        weapon = Drop(850, 500, 'weapon', 'gold weapon')
+        armor = Drop(950, 560, 'armor', 'gold')
+        draw_text(screen, 'gold weapon:', 18, 915, 500)
+        draw_text(screen, '200', 20, 900, 520)
+        draw_text(screen, 'gold armor:', 18, 1020, 560)
+        draw_text(screen, '300', 20, 1010, 580)
+        shops.add(weapon)
+        shops.add(armor)
+    elif a == 2:
+        amulet = Drop(850, 500, 'amulet', 'lvl5')
+        draw_text(screen, 'amulet_5:', 18, 915, 500)
+        draw_text(screen, '150', 20, 910, 520)
+        shops.add(amulet)
     run = True
     while run:
         events = pygame.event.get()
@@ -108,15 +196,69 @@ def shop(a):
                         or mx > rect.topright[0] and my > rect.topright[1] or mx < rect.topleft[0]:
                     return
             if event.type == pygame.MOUSEBUTTONDOWN:
+                global live
+                global money
                 if a == 1:
-                    global live
-                    global money
                     mx, my = pygame.mouse.get_pos()
-                    if heart.pressed(mx, my):
+                    if heart.pressed(mx, my) and money - (100 - live) >= 0:
                         money -= 100 - live
                         live = 100
-                        print(0)
+                if a == 0:
+                    mx, my = pygame.mouse.get_pos()
+                    if weapon.pressed(mx, my) and money - 200 >= 0:
+                        money -= 200
+                        weapon1 = Drop(850, 920, 'Weapon', 'gold weapon')
+                        land.add(weapon1)
+                    elif armor.pressed(mx, my) and money - 300 >= 0:
+                        money -= 300
+                        armor1 = Drop(950, 920, 'Armor', 'gold')
+                        land.add(armor1)
+                if a == 2:
+                    mx, my = pygame.mouse.get_pos()
+                    if amulet.pressed(mx, my) and money - 150 >= 0:
+                        money -= 150
+                        amulet1 = Drop(850, 920, 'Amulet', 'lvl5')
+                        land.add(amulet1)
         shops.draw(screen)
+        pygame.display.flip()
+
+
+def fight(monster, monsterhp, monsterdamage, starthp, damage, chance, dodge):
+    fon = pygame.transform.scale(pygame.image.load('img/shop.png').convert(), (400, 200))
+    rect = fon.get_rect()
+    icons = pygame.sprite.Group()
+    atack = Sword(910, 540)
+    shield = Shield(810, 540)
+    icons.add(atack)
+    icons.add(shield)
+    rect.topleft = (700, 400)
+    run = True
+    while run:
+        screen.blit(fon, (700, 400))
+        draw_text(screen, 'Принц', 22, 1020, 425)
+        draw_text(screen, monster, 22, 800, 425)
+        draw_text(screen, str(starthp), 22, 1020, 475)
+        draw_text(screen, str(monsterhp), 22, 800, 475)
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if atack.pressed(mx, my) or shield.pressed(mx, my):
+                    if atack.pressed(mx, my):
+                        if random.random() <= chance / 100:
+                            monsterhp -= damage
+                            if monsterhp <= 0:
+                                global live
+                                live = starthp
+                                return True
+                    elif shield.pressed(mx, my):
+                        starthp += 5
+                    if random.random() >= dodge / 100:
+                        starthp -= monsterdamage
+                        if starthp <= 0:
+                            return False
+
+        icons.draw(screen)
         pygame.display.flip()
 
 
@@ -145,7 +287,13 @@ class Drop(pygame.sprite.Sprite):
                     armor.name = self.name
                 elif self.type == 'Amulet':
                     amulet.name = self.name
+                    print(amulet.name)
                 self.kill()
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
 
 
 class Weapon(pygame.sprite.Sprite):
@@ -484,6 +632,9 @@ class Boss(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+        self.damage = 14
+        self.name = 'хранитель башни'
+        self.hp = 300
 
     def update(self):
         self.index += 1
@@ -491,10 +642,18 @@ class Boss(pygame.sprite.Sprite):
             self.index = 0
         self.image = pygame.transform.scale(boss_imgs[self.index], (400, 300))
         self.image.set_colorkey(BLACK)
+        if self.rect.centerx - 30 <= player.rect.centerx <= self.rect.centerx + 30:
+            if self.rect.centery == 835:
+                global live
+                if fight(self.name, self.hp, self.damage,
+                         live, player.damage, player.chance + player.dop_chance, player.dodge):
+                    win_screen()
+                else:
+                    death_screen()
 
 
 class Monsters(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
+    def __init__(self, sheet, columns, rows, x, y, name):
         pygame.sprite.Sprite.__init__(self)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
@@ -503,6 +662,22 @@ class Monsters(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = x, y
         self.image.set_colorkey(BLACK)
+        if name == 'Sans':
+            self.name = 'Sans'
+            self.hp = 200
+            self.damage = 10
+        elif name == 'Гоблин Рикардо':
+            self.name = 'Гоблин Рикардо'
+            self.hp = 100
+            self.damage = 9
+        elif name == 'Одноглаз':
+            self.name = 'Одноглаз'
+            self.hp = 100
+            self.damage = 8
+        elif name == 'Грыб':
+            self.name = 'Грыб'
+            self.hp = 80
+            self.damage = 8
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
@@ -517,6 +692,15 @@ class Monsters(pygame.sprite.Sprite):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = pygame.transform.scale(self.frames[self.cur_frame], (400, 400))
         self.image.set_colorkey(BLACK)
+        if self.rect.centerx - 30 <= player.rect.centerx <= self.rect.centerx + 30:
+            if self.rect.centery == 870:
+                global live, money
+                if fight(self.name, self.hp, self.damage,
+                         live, player.damage, player.chance + player.dop_chance, player.dodge):
+                    money += random.randint(1, 15)
+                    self.kill()
+                else:
+                    death_screen()
 
 
 class Health(pygame.sprite.Sprite):
@@ -620,17 +804,17 @@ bashnya = Bashnya(1500, 450)
 for i in range(25):
     dirt = Float(100 * i, 1050)
     land.add(dirt)
-for i in range(-3, 6):
-    monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
+for i in range(0, 6):
+    monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 500, 270 - 400 * i, 'Грыб')
     monsters.add(monster)
 for i in range(6, 12):
-    monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 600, 270 - 400 * i)
+    monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 500, 270 - 400 * i, 'Одноглаз')
     monsters.add(monster)
 for i in range(12, 18):
-    monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
+    monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 500, 270 - 400 * i, 'Гоблин Рикардо')
     monsters.add(monster)
 for i in range(18, 24):
-    monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
+    monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 500, 270 - 400 * i, 'Sans')
     monsters.add(monster)
 weapon = Weapon('bronze weapon')
 inventory_sprites.add(weapon)
@@ -684,7 +868,7 @@ health = Health(800, 100, pygame.image.load('img/live.png').convert())
 all_sprites.add(player)
 all_sprites.add(coin)
 all_sprites.add(health)
-live = 10
+live = 1000000
 money = 100
 
 # Цикл игры
