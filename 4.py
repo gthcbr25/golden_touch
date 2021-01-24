@@ -17,9 +17,24 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 MEBEL = (17, 15, 39)
 GREY = (155, 173, 183)
+BROWN = (172, 116, 52)
 LEFT = True
 RIGHT = True
 v_bashne = False
+WEAPON = []
+ARMOR = []
+AMULET = []
+con = sqlite3.connect('bd/Inventory')
+cur = con.cursor()
+result = cur.execute(f'SELECT name FROM Weapon').fetchall()
+for i in result:
+    WEAPON.append(i[0])
+result = cur.execute(f'SELECT name FROM Armor').fetchall()
+for i in result:
+    ARMOR.append(i[0])
+result = cur.execute(f'SELECT name FROM Amulet').fetchall()
+for i in result:
+    AMULET.append(i[0])
 
 
 def start_screen():
@@ -57,6 +72,87 @@ def draw_text(surf, text, size, x, y):
     surf.blit(text_surface, text_rect)
 
 
+class Drop(pygame.sprite.Sprite):
+    def __init__(self, x, y, type, name):
+        pygame.sprite.Sprite.__init__(self)
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        result = cur.execute(f'SELECT picture FROM "{type}" WHERE name LIKE "{name}"').fetchall()
+        self.name = name
+        self.image = pygame.image.load(result[0][0]).convert()
+        self.image = pygame.transform.scale(self.image, (60, 60))
+        self.type = type
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self, name):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((80, 80))
+        self.image.fill(BROWN)
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (100, 100)
+        self.name = name
+
+    def update(self):
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        if self.name:
+            result = cur.execute(f'SELECT * FROM Weapon WHERE name LIKE "{self.name}"').fetchall()
+            self.image = pygame.image.load(f'{result[0][2]}').convert()
+            player.damage = result[0][0]
+            player.chance = result[0][1]
+
+
+class Armor(pygame.sprite.Sprite):
+    def __init__(self, name=''):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((80, 80))
+        self.image.fill(BROWN)
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (200, 100)
+        self.name = name
+
+    def update(self):
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        if self.name:
+            result = cur.execute(f'SELECT * FROM Armor WHERE name LIKE "{self.name}"').fetchall()
+            self.image = pygame.image.load(f'{result[0][1]}').convert()
+            self.image = pygame.transform.scale(self.image, (80, 80))
+            self.image.set_colorkey(WHITE)
+            player.dodge = result[0][0]
+
+
+class Amulet(pygame.sprite.Sprite):
+    def __init__(self, name=''):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((80, 80))
+        self.image.fill(BROWN)
+        self.image.set_colorkey(MEBEL)
+        self.rect = self.image.get_rect()
+        self.rect.center = (300, 100)
+        self.name = name
+
+    def update(self):
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        if self.name:
+            result = cur.execute(f'SELECT * FROM Amulet WHERE name LIKE "{self.name}"').fetchall()
+            self.image = pygame.image.load(f'{result[0][1]}').convert()
+            self.image = pygame.transform.scale(self.image, (80, 80))
+            player.dop_chance = result[0][0]
+
+
 class Heart(pygame.sprite.Sprite):
     def __init__(self, x, y):
         self.x = x
@@ -82,7 +178,21 @@ def shop(a):
     if a == 1:
         heart = Heart(850, 480)
         shops.add(heart)
-        draw_text(screen, 'вылечиться:', 18, 880, 450)
+        draw_text(screen, 'вылечиться до 100:', 18, 880, 450)
+    elif a == 0:
+        weapon = Drop(850, 500, 'weapon', 'gold weapon')
+        armor = Drop(950, 560, 'armor', 'gold')
+        draw_text(screen, 'gold weapon:', 18, 915, 500)
+        draw_text(screen, '200', 20, 900, 520)
+        draw_text(screen, 'gold armor:', 18, 1020, 560)
+        draw_text(screen, '300', 20, 1010, 580)
+        shops.add(weapon)
+        shops.add(armor)
+    elif a == 2:
+        amulet = Drop(850, 500, 'amulet', 'lvl5')
+        draw_text(screen, 'amulet_5:', 18, 915, 500)
+        draw_text(screen, '150', 20, 910, 520)
+        shops.add(amulet)
     run = True
     while run:
         events = pygame.event.get()
@@ -93,14 +203,23 @@ def shop(a):
                         or mx > rect.topright[0] and my > rect.topright[1] or mx < rect.topleft[0]:
                     return
             if event.type == pygame.MOUSEBUTTONDOWN:
+                global live
+                global money
                 if a == 1:
-                    global live
-                    global money
                     mx, my = pygame.mouse.get_pos()
                     if heart.pressed(mx, my):
                         money -= 100 - live
                         live = 100
-                        print(0)
+                if a == 0:
+                    mx, my = pygame.mouse.get_pos()
+                    if weapon.pressed(mx, my):
+                        money -= 200
+                    elif armor.pressed(mx, my):
+                        money -= 300
+                if a == 2:
+                    mx, my = pygame.mouse.get_pos()
+                    if amulet.pressed(mx, my):
+                        money -= 150
         shops.draw(screen)
         pygame.display.flip()
 
@@ -349,42 +468,6 @@ class Door(pygame.sprite.Sprite):
         self.y = y
 
 
-class Weapon(pygame.sprite.Sprite):
-    def __init__(self, x, y, name):
-        global name1
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(GREEN)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        name1 = name
-
-
-class Youweapon(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        global name1
-        global youweapon
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(f'{youweapon}').convert()
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-
-    def podobr(self):
-        global youweapon
-        con = sqlite3.connect('bd/Inventory')
-        cur = con.cursor()
-        result = cur.execute(f'SELECT picture FROM Weapon WHERE name LIKE "{name1}"').fetchall()
-        for elem in result:
-            youweapon = elem[0]
-        con.close()
-
-    def update(self):
-        self.rect.centerx = player.rect.centerx - 500
-        self.rect.centery = player.rect.centery - 500
-        self.image = pygame.image.load(f'{youweapon}').convert()
-        self.image.set_colorkey(BLACK)
-
-
 class Boss(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -515,6 +598,7 @@ all_sprites = pygame.sprite.Group()
 oven_sprites = pygame.sprite.Group()
 land = pygame.sprite.Group()
 clock = pygame.time.Clock()
+inventory_sprites = pygame.sprite.Group()
 seller_sprites = pygame.sprite.Group()
 seller = Seller(pygame.image.load('img/man2.png').convert(), 4, 1, 1100, 780)
 seller1 = Seller(pygame.image.load('img/man1.png').convert(), 4, 1, 1900, 780)
@@ -548,6 +632,12 @@ for i in range(18, 24):
     for j in range(3):
         monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
         monsters.add(monster)
+weapon = Weapon('bronze weapon')
+inventory_sprites.add(weapon)
+armor = Armor()
+inventory_sprites.add(armor)
+amulet = Amulet()
+inventory_sprites.add(amulet)
 boss = Boss(800, -9155)
 monsters.add(boss)
 player = Player(200, 900)
@@ -590,17 +680,13 @@ for i in range(-9190, 811, 400):
 
     all_bashnya.add(centr)
     all_bashnya.add(door)
-weapon = Weapon(500, 900, 'bronze')
-uweapon = Youweapon(200, 200)
-all_sprites.add(uweapon)
-check_weapon = False
 coin = Coins(400, 0, pygame.image.load('img/money.png').convert())
 health = Health(300, 0, pygame.image.load('img/live.png').convert())
 all_sprites.add(player)
 all_sprites.add(coin)
 all_sprites.add(health)
 live = 10
-money = 100
+money = 1000
 
 # Цикл игры
 running = True
@@ -652,9 +738,7 @@ while running:
         # Обновление
         all_sprites.update()
         land.update()
-        if check_weapon:
-            uweapon.podobr()
-            check_weapon = False
+        inventory_sprites.update()
         # Рендеринг
         screen.blit(background, background_rect)
         camera.update(player)
@@ -670,6 +754,7 @@ while running:
         land.draw(screen)
         seller_sprites.draw(screen)
         all_sprites.draw(screen)
+        inventory_sprites.draw(screen)
         draw_text(screen, str(money), 18, 570, 185)
         draw_text(screen, str(live), 18, 450, 185)
     else:
@@ -686,14 +771,12 @@ while running:
                             v_bashne = False
                         else:
                             player.rect.centery += 400
-                elif event.key == pygame.K_e:
-                    if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
-                        if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
                             check_weapon = True
             elif event.type == pygame.USEREVENT + 5:
                 monsters.update()
         all_sprites.update()
         all_bashnya.update()
+        inventory_sprites.update()
         # Рендеринг
         screen.blit(background, background_rect)
         camera.update(player)
@@ -708,9 +791,7 @@ while running:
         all_sprites.draw(screen)
         draw_text(screen, str(money), 18, 570, 185)
         draw_text(screen, str(live), 18, 450, 185)
-        if check_weapon:
-            uweapon.podobr()
-            check_weapon = False
+        inventory_sprites.draw(screen)
 
     pygame.display.flip()
 
