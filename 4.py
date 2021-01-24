@@ -22,7 +22,6 @@ RIGHT = True
 v_bashne = False
 
 
-
 def start_screen():
     fon = pygame.transform.scale(pygame.image.load('img/fon.png').convert(), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
@@ -49,17 +48,60 @@ def start_screen():
         clock.tick(FPS)
 
 
-def shop():
-    fon = pygame.transform.scale(pygame.image.load('img/shop.jpg').convert(), (500, 400))
-    screen.blit(fon, (500, 250))
-    running = True
-    while running:
+def draw_text(surf, text, size, x, y):
+    font_name = pygame.font.match_font('arial')
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, BLACK)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
+
+
+class Heart(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('img/live.png').convert(), (200, 60))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = self.x, self.y
+        self.image.set_colorkey(BLACK)
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
+def shop(a):
+    fon = pygame.transform.scale(pygame.image.load('img/shop.png').convert(), (400, 200))
+    rect = fon.get_rect()
+    screen.blit(fon, (700, 400))
+    rect.topleft = (700, 400)
+    shops = pygame.sprite.Group()
+    if a == 1:
+        heart = Heart(850, 480)
+        shops.add(heart)
+    run = True
+    while run:
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                return
+                mx, my = pygame.mouse.get_pos()
+                if mx > rect.topleft[0] and my < rect.topleft[1] or mx > rect.bottomleft[0] and my > rect.bottomleft[1]\
+                        or mx > rect.topright[0] and my > rect.topright[1] or mx < rect.topleft[0]:
+                    return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if a == 1:
+                    global live
+                    global money
+                    mx, my = pygame.mouse.get_pos()
+                    if heart.pressed(mx, my):
+                        money -= 100 - live
+                        live = 100
+                        print(0)
+        shops.draw(screen)
         pygame.display.flip()
-        clock.tick(FPS)
 
 
 class Button(pygame.sprite.Sprite):
@@ -386,17 +428,30 @@ class Monsters(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
 
 
-class Coins(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+class Health(pygame.sprite.Sprite):
+    def __init__(self, x, y, img):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(pygame.image.load('img/money.jpg').convert(), (200, 45))
-        self.image.set_colorkey(WHITE)
+        self.image = pygame.transform.scale(img, (200, 45))
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        print(1)
 
     def update(self):
         self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 700
+        self.image.set_colorkey(BLACK)
+
+
+class Coins(pygame.sprite.Sprite):
+    def __init__(self, x, y, img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(img, (70, 60))
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 450
         self.rect.centery = player.rect.centery - 700
         self.image.set_colorkey(WHITE)
 
@@ -429,6 +484,8 @@ background = pygame.image.load(path.join(img_dir, "fon.png")).convert()
 background = pygame.transform.scale(background, (1920, 1020))
 background_rect = background.get_rect()
 pygame.display.set_caption("My Game")
+
+pygame.display.update()
 player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('img/pb2.png').convert(),
                pygame.image.load('img/pb3.png').convert(), pygame.image.load('img/pb4.png').convert(),
                pygame.image.load('img/pb5.png').convert()]
@@ -536,9 +593,13 @@ weapon = Weapon(500, 900, 'bronze')
 uweapon = Youweapon(200, 200)
 all_sprites.add(uweapon)
 check_weapon = False
-coin = Coins(300, 0)
+coin = Coins(400, 0, pygame.image.load('img/money.png').convert())
+health = Health(300, 0, pygame.image.load('img/live.png').convert())
 all_sprites.add(player)
 all_sprites.add(coin)
+all_sprites.add(health)
+live = 10
+money = 100
 
 # Цикл игры
 running = True
@@ -571,19 +632,20 @@ while running:
                     word = Words(seller.rect.centerx, seller.rect.centery - 60)
                     seller_sprites.add(word)
                     if word.pressed(pygame.mouse.get_pos()):
-                        shop()
+                        shop(a)
                 elif seller1.pressed(pygame.mouse.get_pos()):
                     a = 1
                     word1 = Words(seller1.rect.centerx, seller1.rect.centery - 60)
                     seller_sprites.add(word1)
                     if word1.pressed(pygame.mouse.get_pos()):
-                        shop()
+                        shop(a)
                 elif seller2.pressed(pygame.mouse.get_pos()):
                     a = 2
                     word2 = Words(seller2.rect.centerx, seller2.rect.centery - 60)
                     seller_sprites.add(word2)
                     if word2.pressed(pygame.mouse.get_pos()):
-                        shop()
+                        shop(a)
+
 
 
         # Обновление
@@ -607,6 +669,8 @@ while running:
         land.draw(screen)
         seller_sprites.draw(screen)
         all_sprites.draw(screen)
+        draw_text(screen, str(money), 18, 570, 185)
+        draw_text(screen, str(live), 18, 450, 185)
     else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
