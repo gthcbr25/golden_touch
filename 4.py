@@ -82,6 +82,7 @@ def shop(a):
     if a == 1:
         heart = Heart(850, 480)
         shops.add(heart)
+        draw_text(screen, 'вылечиться:', 18, 880, 450)
     run = True
     while run:
         events = pygame.event.get()
@@ -705,6 +706,8 @@ while running:
         all_bashnya.draw(screen)
         monsters.draw(screen)
         all_sprites.draw(screen)
+        draw_text(screen, str(money), 18, 570, 185)
+        draw_text(screen, str(live), 18, 450, 185)
         if check_weapon:
             uweapon.podobr()
             check_weapon = False
