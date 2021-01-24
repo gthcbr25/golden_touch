@@ -63,6 +63,63 @@ def start_screen():
         clock.tick(FPS)
 
 
+def draw_text(surf, text, size, x, y):
+    font_name = pygame.font.match_font('arial')
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, BLACK)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
+
+
+class Heart(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('img/live.png').convert(), (200, 60))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = self.x, self.y
+        self.image.set_colorkey(BLACK)
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
+def shop(a):
+    fon = pygame.transform.scale(pygame.image.load('img/shop.png').convert(), (400, 200))
+    rect = fon.get_rect()
+    screen.blit(fon, (700, 400))
+    rect.topleft = (700, 400)
+    shops = pygame.sprite.Group()
+    if a == 1:
+        heart = Heart(850, 480)
+        shops.add(heart)
+        draw_text(screen, 'вылечиться:', 18, 880, 450)
+    run = True
+    while run:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if mx > rect.topleft[0] and my < rect.topleft[1] or mx > rect.bottomleft[0] and my > rect.bottomleft[1]\
+                        or mx > rect.topright[0] and my > rect.topright[1] or mx < rect.topleft[0]:
+                    return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if a == 1:
+                    global live
+                    global money
+                    mx, my = pygame.mouse.get_pos()
+                    if heart.pressed(mx, my):
+                        money -= 100 - live
+                        live = 100
+                        print(0)
+        shops.draw(screen)
+        pygame.display.flip()
+
+
 class Drop(pygame.sprite.Sprite):
     def __init__(self, x, y, type, name):
         pygame.sprite.Sprite.__init__(self)
@@ -405,7 +462,6 @@ class Chest(pygame.sprite.Sprite):
                 self.kill()
 
 
-
 class Door(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -461,6 +517,34 @@ class Monsters(pygame.sprite.Sprite):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = pygame.transform.scale(self.frames[self.cur_frame], (400, 400))
         self.image.set_colorkey(BLACK)
+
+
+class Health(pygame.sprite.Sprite):
+    def __init__(self, x, y, img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(img, (200, 45))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx + 870
+        self.rect.centery = player.rect.centery - 750
+        self.image.set_colorkey(BLACK)
+
+
+class Coins(pygame.sprite.Sprite):
+    def __init__(self, x, y, img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(img, (70, 60))
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx + 800
+        self.rect.centery = player.rect.centery - 800
+        self.image.set_colorkey(WHITE)
 
 
 class Camera:
@@ -595,8 +679,13 @@ for i in range(-9190, 811, 400):
     door = Door(900, i + 66)
     all_bashnya.add(centr)
     all_bashnya.add(door)
-
+coin = Coins(1000, 0, pygame.image.load('img/money.png').convert())
+health = Health(800, 100, pygame.image.load('img/live.png').convert())
 all_sprites.add(player)
+all_sprites.add(coin)
+all_sprites.add(health)
+live = 10
+money = 100
 
 # Цикл игры
 running = True
@@ -622,16 +711,22 @@ while running:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if seller.pressed(pygame.mouse.get_pos()):
                     a = 0
-                    word = Words(seller.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word = Words(seller.rect.centerx, seller.rect.centery - 60)
                     seller_sprites.add(word)
+                    if word.pressed(pygame.mouse.get_pos()):
+                        shop(a)
                 elif seller1.pressed(pygame.mouse.get_pos()):
                     a = 1
-                    word1 = Words(seller1.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word1 = Words(seller1.rect.centerx, seller1.rect.centery - 60)
                     seller_sprites.add(word1)
+                    if word1.pressed(pygame.mouse.get_pos()):
+                        shop(a)
                 elif seller2.pressed(pygame.mouse.get_pos()):
                     a = 2
-                    word2 = Words(seller2.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word2 = Words(seller2.rect.centerx, seller2.rect.centery - 60)
                     seller_sprites.add(word2)
+                    if word2.pressed(pygame.mouse.get_pos()):
+                        shop(a)
 
         # Обновление
         all_sprites.update()
@@ -653,6 +748,8 @@ while running:
         seller_sprites.draw(screen)
         all_sprites.draw(screen)
         inventory_sprites.draw(screen)
+        draw_text(screen, str(money), 18, 1800, 85)
+        draw_text(screen, str(live), 18, 1800, 135)
     else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -685,5 +782,7 @@ while running:
         monsters.draw(screen)
         all_sprites.draw(screen)
         inventory_sprites.draw(screen)
+        draw_text(screen, str(money), 18, 1800, 85)
+        draw_text(screen, str(live), 18, 1800, 135)
     pygame.display.flip()
 pygame.quit()

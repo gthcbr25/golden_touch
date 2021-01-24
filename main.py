@@ -48,36 +48,61 @@ def start_screen():
         clock.tick(FPS)
 
 
-def give_drop():
-    global drop
-    global dropp
-    global dddrop
-    if drop:
-        sp = ['bronze weapon', 'gold weapon', 'diamond weapon']
-        d = choice(sp)
-        con = sqlite3.connect('bd/Inventory')
-        cur = con.cursor()
-        result = cur.execute(f'SELECT picture FROM Weapon WHERE name LIKE "{d}"').fetchall()
-        for elem in result:
-            dropp = elem[0]
-            print(dropp)
-        con.close()
-        x = chest.rect.centerx
-        y = chest.rect.centery
-        dddrop = Drop(x, y)
-        drop_sprites.add(dddrop)
-        drop_sprites.update()
-        drop = False
+def draw_text(surf, text, size, x, y):
+    font_name = pygame.font.match_font('arial')
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, BLACK)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
 
 
-class Drop(pygame.sprite.Sprite):
+class Heart(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        global dropp
+        self.x = x
+        self.y = y
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(f'{dropp}').convert()
-        self.image.set_colorkey(BLACK)
+        self.image = pygame.transform.scale(pygame.image.load('img/live.png').convert(), (200, 60))
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+        self.rect.topleft = self.x, self.y
+        self.image.set_colorkey(BLACK)
+
+    def pressed(self, mx, my):
+        if mx > self.rect.topleft[0] and my > self.rect.topleft[1]:
+            if mx < self.rect.bottomright[0] and my < self.rect.bottomright[1]:
+                return True
+
+
+def shop(a):
+    fon = pygame.transform.scale(pygame.image.load('img/shop.png').convert(), (400, 200))
+    rect = fon.get_rect()
+    screen.blit(fon, (700, 400))
+    rect.topleft = (700, 400)
+    shops = pygame.sprite.Group()
+    if a == 1:
+        heart = Heart(850, 480)
+        shops.add(heart)
+        draw_text(screen, 'вылечиться:', 18, 880, 450)
+    run = True
+    while run:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if mx > rect.topleft[0] and my < rect.topleft[1] or mx > rect.bottomleft[0] and my > rect.bottomleft[1]\
+                        or mx > rect.topright[0] and my > rect.topright[1] or mx < rect.topleft[0]:
+                    return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if a == 1:
+                    global live
+                    global money
+                    mx, my = pygame.mouse.get_pos()
+                    if heart.pressed(mx, my):
+                        money -= 100 - live
+                        live = 100
+                        print(0)
+        shops.draw(screen)
+        pygame.display.flip()
 
 
 class Button(pygame.sprite.Sprite):
@@ -103,7 +128,8 @@ class Seller(pygame.sprite.Sprite):
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
         self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 170))
-        self.rect = self.rect.move(x, y)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = x, y
         self.image.set_colorkey(BLACK)
 
     def cut_sheet(self, sheet, columns, rows):
@@ -132,20 +158,20 @@ class Words(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         global words_imgs
         if a == 0:
-            self.image = pygame.transform.scale(words_imgs[0], (650, 500))
+            self.image = pygame.transform.scale(words_imgs[0], (150, 90))
             self.image.set_colorkey(WHITE)
             self.rect = self.image.get_rect()
-            self.rect.topleft = x, y
+            self.rect.center = (x, y)
         if a == 1:
-            self.image = pygame.transform.scale(words_imgs[1], (650, 500))
+            self.image = pygame.transform.scale(words_imgs[1], (150, 90))
             self.image.set_colorkey(WHITE)
             self.rect = self.image.get_rect()
-            self.rect.topleft = x, y
+            self.rect.center = (x, y)
         if a == 2:
-            self.image = pygame.transform.scale(words_imgs[2], (650, 500))
+            self.image = pygame.transform.scale(words_imgs[2], (150, 90))
             self.image.set_colorkey(WHITE)
             self.rect = self.image.get_rect()
-            self.rect.topleft = x, y
+            self.rect.center = (x, y)
 
     def pressed(self, pos):
         mx, my = pos
@@ -291,7 +317,7 @@ class Bochka(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         global bochka_img
-        bochka_img = pygame.transform.scale(bochka_img, (75, 70))
+        bochka_img = pygame.transform.scale(bochka_img, (125, 90))
         self.image = bochka_img
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
@@ -303,7 +329,7 @@ class Chest(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         global chest_imgs
         chest_img = random.choice(chest_imgs)
-        yachik_img = pygame.transform.scale(chest_img, (75, 40))
+        yachik_img = pygame.transform.scale(chest_img, (125, 90))
         self.image = yachik_img
         self.image.set_colorkey(MEBEL)
         self.rect = self.image.get_rect()
@@ -323,69 +349,40 @@ class Door(pygame.sprite.Sprite):
         self.y = y
 
 
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self, x, y, name):
+        global name1
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((50, 50))
+        self.image.fill(GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        name1 = name
+
+
 class Youweapon(pygame.sprite.Sprite):
     def __init__(self, x, y):
+        global name1
+        global youweapon
         pygame.sprite.Sprite.__init__(self)
-        ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (10, 10))
-        self.image = ggg
+        self.image = pygame.image.load(f'{youweapon}').convert()
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
-    def podobr(self):
-        global youweapon
-        global dropp
-        youweapon = dropp
-
-    def update(self):
-        global youweapon
-        ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (100, 100))
-        self.image = ggg
-        self.image.set_colorkey(BLACK)
-
-
-''''class Youarmor(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (10, 10))
-        self.image = ggg
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
     def podobr(self):
         global youweapon
         con = sqlite3.connect('bd/Inventory')
         cur = con.cursor()
-        result = cur.execute(f'SELECT * FROM Weapon WHERE name LIKE "{spawn_weapon}"').fetchall()
+        result = cur.execute(f'SELECT picture FROM Weapon WHERE name LIKE "{name1}"').fetchall()
         for elem in result:
-            youweapon = elem[2]
-            print('000000000000000000000000000000')
+            youweapon = elem[0]
         con.close()
-    def update(self):
-        global youweapon
-        ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (100, 100))
-        self.image = ggg
-        self.image.set_colorkey(BLACK)
-class Youamulet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (10, 10))
-        self.image = ggg
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-    def podobr(self):
-        global youweapon
-        con = sqlite3.connect('bd/Inventory')
-        cur = con.cursor()
-        result = cur.execute(f'SELECT * FROM Weapon WHERE name LIKE "{spawn_weapon}"').fetchall()
-        for elem in result:
-            youweapon = elem[2]
-            print('000000000000000000000000000000')
-        con.close()
-    def update(self):
-        global youweapon
-        ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (100, 100))
-        self.image = ggg
-        self.image.set_colorkey(BLACK)'''''
 
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 500
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.image.set_colorkey(BLACK)
 
 
 class Boss(pygame.sprite.Sprite):
@@ -432,6 +429,34 @@ class Monsters(pygame.sprite.Sprite):
         self.image.set_colorkey(BLACK)
 
 
+class Health(pygame.sprite.Sprite):
+    def __init__(self, x, y, img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(img, (200, 45))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 700
+        self.image.set_colorkey(BLACK)
+
+
+class Coins(pygame.sprite.Sprite):
+    def __init__(self, x, y, img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(img, (70, 60))
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 450
+        self.rect.centery = player.rect.centery - 700
+        self.image.set_colorkey(WHITE)
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -460,6 +485,8 @@ background = pygame.image.load(path.join(img_dir, "fon.png")).convert()
 background = pygame.transform.scale(background, (1920, 1020))
 background_rect = background.get_rect()
 pygame.display.set_caption("My Game")
+
+pygame.display.update()
 player_imgs = [pygame.image.load('img/pb1.png').convert(), pygame.image.load('img/pb2.png').convert(),
                pygame.image.load('img/pb3.png').convert(), pygame.image.load('img/pb4.png').convert(),
                pygame.image.load('img/pb5.png').convert()]
@@ -484,13 +511,10 @@ bash_image = pygame.image.load('img/basn.png').convert()
 etaj_image = pygame.image.load('img/etaj.jpg').convert()
 etaj_image2 = pygame.image.load('img/etaj_pravo.jpg').convert()
 door_image = pygame.image.load('img/door.png').convert()
-drop = False
 all_sprites = pygame.sprite.Group()
 oven_sprites = pygame.sprite.Group()
 land = pygame.sprite.Group()
 clock = pygame.time.Clock()
-inventory_sprites = pygame.sprite.Group()
-drop_sprites = pygame.sprite.Group()
 seller_sprites = pygame.sprite.Group()
 seller = Seller(pygame.image.load('img/man2.png').convert(), 4, 1, 1100, 780)
 seller1 = Seller(pygame.image.load('img/man1.png').convert(), 4, 1, 1900, 780)
@@ -509,18 +533,22 @@ for i in range(25):
     dirt = Float(100 * i, 1050)
     land.add(dirt)
 for i in range(-3, 6):
-    monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
-    monsters.add(monster)
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
 for i in range(6, 12):
-    monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 600, 270 - 400 * i)
-    monsters.add(monster)
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
 for i in range(12, 18):
-    monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
-    monsters.add(monster)
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
 for i in range(18, 24):
-    monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
-    monsters.add(monster)
-boss = Boss(800, -9165)
+    for j in range(3):
+        monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
+        monsters.add(monster)
+boss = Boss(800, -9155)
 monsters.add(boss)
 player = Player(200, 900)
 land.add(bashnya)
@@ -532,42 +560,47 @@ for i in range(-9190, 811, 400):
     y = i
     all_bashnya.add(prav_komnata)
     if random.choice([False, True, False]):
-        chest = Chest(x + 170, y + 110)
+        chest = Chest(x + 240, y + 90)
         all_bashnya.add(chest)
     if random.choice([False, True]):
-        bochka = Bochka(x + 90, y + 96)
+        bochka = Bochka(x + 120, y + 85)
         all_bashnya.add(bochka)
     if random.choice([False, True]):
-        yachik = Yachik(x, y + 95)
+        yachik = Yachik(x - 10, y + 90)
         all_bashnya.add(yachik)
     if random.choice([False, True]):
-        yachik2 = Yachik(x - 115, y + 95)
+        yachik2 = Yachik(x - 130, y + 90)
         all_bashnya.add(yachik2)
     lev_komnata = Room(150, i, True)
     all_bashnya.add(lev_komnata)
     x = 150
     if random.choice([False, True]):
-        chest = Chest(x - 170, y + 110)
+        chest = Chest(x - 240, y + 90)
         all_bashnya.add(chest)
     if random.choice([False, True]):
-        bochka = Bochka(x - 90, y + 96)
+        bochka = Bochka(x - 120, y + 85)
         all_bashnya.add(bochka)
     if random.choice([False, True]):
-        yachik = Yachik(x, y + 95)
+        yachik = Yachik(x + 10, y + 90)
         all_bashnya.add(yachik)
     if random.choice([False, True]):
-        yachik2 = Yachik(x + 115, y + 95)
+        yachik2 = Yachik(x + 130, y + 90)
         all_bashnya.add(yachik2)
     door = Door(900, i + 66)
 
     all_bashnya.add(centr)
     all_bashnya.add(door)
-youweapon = 'img/Gold corty.png'
-
-uweapon = Youweapon(100, 100)
-inventory_sprites.add(uweapon)
+weapon = Weapon(500, 900, 'bronze')
+uweapon = Youweapon(200, 200)
+all_sprites.add(uweapon)
 check_weapon = False
+coin = Coins(400, 0, pygame.image.load('img/money.png').convert())
+health = Health(300, 0, pygame.image.load('img/live.png').convert())
 all_sprites.add(player)
+all_sprites.add(coin)
+all_sprites.add(health)
+live = 10
+money = 100
 
 # Цикл игры
 running = True
@@ -590,24 +623,35 @@ while running:
                 if keystate[pygame.K_UP]:
                     if bashnya.rect.centerx - 200 <= player.rect.centerx <= bashnya.rect.centerx + 200:
                         v_bashne = True
+                if event.key == pygame.K_e:
+                    if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
+                        if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
+                            check_weapon = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if seller.pressed(pygame.mouse.get_pos()):
                     a = 0
-                    word = Words(seller.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word = Words(seller.rect.centerx, seller.rect.centery - 60)
                     seller_sprites.add(word)
+                    if word.pressed(pygame.mouse.get_pos()):
+                        shop(a)
                 elif seller1.pressed(pygame.mouse.get_pos()):
                     a = 1
-                    word1 = Words(seller1.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word1 = Words(seller1.rect.centerx, seller1.rect.centery - 60)
                     seller_sprites.add(word1)
+                    if word1.pressed(pygame.mouse.get_pos()):
+                        shop(a)
                 elif seller2.pressed(pygame.mouse.get_pos()):
                     a = 2
-                    word2 = Words(seller2.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
+                    word2 = Words(seller2.rect.centerx, seller2.rect.centery - 60)
                     seller_sprites.add(word2)
+                    if word2.pressed(pygame.mouse.get_pos()):
+                        shop(a)
+
+
 
         # Обновление
         all_sprites.update()
         land.update()
-        inventory_sprites.update()
         if check_weapon:
             uweapon.podobr()
             check_weapon = False
@@ -622,15 +666,12 @@ while running:
             camera.apply(sprite)
         for sprite in land:
             camera.apply(sprite)
-        for sprite in drop_sprites:
-            camera.apply(sprite)
-        for sprite in inventory_sprites:
-            camera.update(sprite)
         oven_sprites.draw(screen)
         land.draw(screen)
         seller_sprites.draw(screen)
         all_sprites.draw(screen)
-        inventory_sprites.draw(screen)
+        draw_text(screen, str(money), 18, 570, 185)
+        draw_text(screen, str(live), 18, 450, 185)
     else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -646,29 +687,13 @@ while running:
                         else:
                             player.rect.centery += 400
                 elif event.key == pygame.K_e:
-                    if player.rect.centerx - 100 < chest.rect.centerx < player.rect.centerx + 100:
-                        print(1)
-                        if chest.rect.centery - 50 <= player.rect.centery <= chest.rect.centery + 50:
-                            print(0)
-                            give_drop()
-                            drop = True
-                elif event.key == pygame.K_f:
-                    if drop:
-                        check_weapon = True
-                        inventory_sprites.update()
+                    if player.rect.centerx - 100 < weapon.rect.centerx < player.rect.centerx + 100:
+                        if player.rect.centery - 20 < weapon.rect.centery < player.rect.centery + 20:
+                            check_weapon = True
             elif event.type == pygame.USEREVENT + 5:
                 monsters.update()
-        if check_weapon:
-            global dddrop
-            uweapon.podobr()
-            inventory_sprites.update()
-            dddrop.kill()
-            drop_sprites.update()
-            check_weapon = False
         all_sprites.update()
         all_bashnya.update()
-        drop_sprites.update()
-        inventory_sprites.update()
         # Рендеринг
         screen.blit(background, background_rect)
         camera.update(player)
@@ -678,12 +703,15 @@ while running:
             camera.apply(sprite)
         for sprite in monsters:
             camera.apply(sprite)
-        for sprite in drop_sprites:
-            camera.apply(sprite)
         all_bashnya.draw(screen)
         monsters.draw(screen)
         all_sprites.draw(screen)
-        inventory_sprites.draw(screen)
-        drop_sprites.draw(screen)
+        draw_text(screen, str(money), 18, 570, 185)
+        draw_text(screen, str(live), 18, 450, 185)
+        if check_weapon:
+            uweapon.podobr()
+            check_weapon = False
+
     pygame.display.flip()
+
 pygame.quit()
