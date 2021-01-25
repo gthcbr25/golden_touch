@@ -555,6 +555,18 @@ class Room(pygame.sprite.Sprite):
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+        self.inv = invert
+
+    def update(self):
+        global LEFT, RIGHT
+        if self.inv:
+            if self.rect.centerx - 320 >= player.rect.centerx:
+                LEFT = False
+                RIGHT = True
+        else:
+            if self.rect.centerx + 320 <= player.rect.centerx:
+                RIGHT = False
+                LEFT = True
 
 
 class Yachik(pygame.sprite.Sprite):
