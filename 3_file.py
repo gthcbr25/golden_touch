@@ -20,8 +20,6 @@ GREY = (155, 173, 183)
 LEFT = True
 RIGHT = True
 v_bashne = False
-drop = False
-dropp = ''
 
 
 def start_screen():
@@ -55,7 +53,7 @@ def give_drop():
     global dropp
     global dddrop
     if drop:
-        sp = ['bronze', 'золотой меч', 'алмазный меч']
+        sp = ['bronze weapon', 'gold weapon', 'diamond weapon']
         d = choice(sp)
         con = sqlite3.connect('bd/Inventory')
         cur = con.cursor()
@@ -282,7 +280,7 @@ class Yachik(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         global yachik_imgs
         yachik_img = random.choice(yachik_imgs)
-        yachik_img = pygame.transform.scale(yachik_img, (75, 40))
+        yachik_img = pygame.transform.scale(yachik_img, (125, 90))
         self.image = yachik_img
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
@@ -352,7 +350,6 @@ class Youweapon(pygame.sprite.Sprite):
         self.image = ggg
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-
     def podobr(self):
         global youweapon
         con = sqlite3.connect('bd/Inventory')
@@ -362,14 +359,11 @@ class Youweapon(pygame.sprite.Sprite):
             youweapon = elem[2]
             print('000000000000000000000000000000')
         con.close()
-
     def update(self):
         global youweapon
         ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (100, 100))
         self.image = ggg
         self.image.set_colorkey(BLACK)
-
-
 class Youamulet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -377,7 +371,6 @@ class Youamulet(pygame.sprite.Sprite):
         self.image = ggg
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-
     def podobr(self):
         global youweapon
         con = sqlite3.connect('bd/Inventory')
@@ -387,13 +380,36 @@ class Youamulet(pygame.sprite.Sprite):
             youweapon = elem[2]
             print('000000000000000000000000000000')
         con.close()
-
     def update(self):
         global youweapon
         ggg = pygame.transform.scale(pygame.image.load(f'{youweapon}').convert(), (100, 100))
         self.image = ggg
         self.image.set_colorkey(BLACK)'''''
 
+
+'''class Youweapon(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        global name1
+        global youweapon
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def podobr(self):
+        global youweapon
+        con = sqlite3.connect('bd/Inventory')
+        cur = con.cursor()
+        result = cur.execute(f'SELECT picture FROM Weapon WHERE name LIKE "{name1}"').fetchall()
+        for elem in result:
+            youweapon = elem[0]
+        con.close()
+
+    def update(self):
+        self.rect.centerx = player.rect.centerx - 500
+        self.rect.centery = player.rect.centery - 500
+        self.image = pygame.image.load(f'{youweapon}').convert()
+        self.image.set_colorkey(BLACK)'''
 
 
 class Boss(pygame.sprite.Sprite):
@@ -458,6 +474,7 @@ class Camera:
 
 
 # Создаем игру и окно
+dropp = ''
 img_dir = path.join(path.dirname(__file__), 'img')
 pygame.init()
 pygame.mixer.init()
@@ -492,12 +509,9 @@ bash_image = pygame.image.load('img/basn.png').convert()
 etaj_image = pygame.image.load('img/etaj.jpg').convert()
 etaj_image2 = pygame.image.load('img/etaj_pravo.jpg').convert()
 door_image = pygame.image.load('img/door.png').convert()
-noarmor = pygame.image.load('img/noarmor.jpg').convert()
-noamulet = pygame.image.load('img/noamulet.png').convert()
-noweapon = pygame.image.load('img/noweapon.png').convert()
+drop = False
 all_sprites = pygame.sprite.Group()
 oven_sprites = pygame.sprite.Group()
-drop_sprites = pygame.sprite.Group()
 land = pygame.sprite.Group()
 clock = pygame.time.Clock()
 inventory_sprites = pygame.sprite.Group()
@@ -514,28 +528,24 @@ oven = Oven(1050, 860)
 oven_sprites.add(oven)
 all_bashnya = pygame.sprite.Group()
 camera = Camera()
-youweapon = 'img/amulet_chest.jpg'
+youweapon = 'img/Gold corty.png'
 bashnya = Bashnya(1500, 450)
 for i in range(25):
     dirt = Float(100 * i, 1050)
     land.add(dirt)
 for i in range(-3, 6):
-    for j in range(3):
-        monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
-        monsters.add(monster)
+    monster = Monsters(pygame.image.load('img/Idle.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
+    monsters.add(monster)
 for i in range(6, 12):
-    for j in range(3):
-        monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 600 * j, 270 - 400 * i)
-        monsters.add(monster)
+    monster = Monsters(pygame.image.load('img/Flight.png').convert(), 8, 1, 200 + 600, 270 - 400 * i)
+    monsters.add(monster)
 for i in range(12, 18):
-    for j in range(3):
-        monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
-        monsters.add(monster)
+    monster = Monsters(pygame.image.load('img/goblin.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
+    monsters.add(monster)
 for i in range(18, 24):
-    for j in range(3):
-        monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600 * j, 270 - 400 * i)
-        monsters.add(monster)
-boss = Boss(800, -9155)
+    monster = Monsters(pygame.image.load('img/skelet.png').convert(), 4, 1, 200 + 600, 270 - 400 * i)
+    monsters.add(monster)
+boss = Boss(800, -9165)
 monsters.add(boss)
 player = Player(200, 900)
 land.add(bashnya)
@@ -553,10 +563,10 @@ for i in range(-9190, 811, 400):
         bochka = Bochka(x + 90, y + 96)
         all_bashnya.add(bochka)
     if random.choice([False, True]):
-        yachik = Yachik(x, y + 115)
+        yachik = Yachik(x, y + 95)
         all_bashnya.add(yachik)
     if random.choice([False, True]):
-        yachik2 = Yachik(x - 75, y + 115)
+        yachik2 = Yachik(x - 115, y + 95)
         all_bashnya.add(yachik2)
     lev_komnata = Room(150, i, True)
     all_bashnya.add(lev_komnata)
@@ -568,19 +578,22 @@ for i in range(-9190, 811, 400):
         bochka = Bochka(x - 90, y + 96)
         all_bashnya.add(bochka)
     if random.choice([False, True]):
-        yachik = Yachik(x, y + 115)
+        yachik = Yachik(x, y + 95)
         all_bashnya.add(yachik)
     if random.choice([False, True]):
-        yachik2 = Yachik(x + 75, y + 115)
+        yachik2 = Yachik(x + 115, y + 95)
         all_bashnya.add(yachik2)
     door = Door(900, i + 66)
 
     all_bashnya.add(centr)
     all_bashnya.add(door)
-uweapon = Youweapon(200, 200)
+youweapon = 'img/Gold corty.png'
+
+uweapon = Youweapon(100, 100)
 inventory_sprites.add(uweapon)
 check_weapon = False
 all_sprites.add(player)
+
 # Цикл игры
 running = True
 left = False
@@ -595,6 +608,8 @@ while running:
             elif event.type == pygame.USEREVENT + 1:
                 seller_sprites.update()
 
+            elif event.type == pygame.USEREVENT + 5:
+                oven_sprites.update()
             elif event.type == pygame.KEYDOWN:
                 keystate = pygame.key.get_pressed()
                 if keystate[pygame.K_UP]:
@@ -605,22 +620,22 @@ while running:
                     a = 0
                     word = Words(seller.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
                     seller_sprites.add(word)
-                    print(0)
                 elif seller1.pressed(pygame.mouse.get_pos()):
                     a = 1
                     word1 = Words(seller1.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
                     seller_sprites.add(word1)
-                    print(1)
                 elif seller2.pressed(pygame.mouse.get_pos()):
                     a = 2
                     word2 = Words(seller2.rect.topleft[0] - 50, seller.rect.topleft[1] - 100)
                     seller_sprites.add(word2)
-                    print(2)
 
         # Обновление
         all_sprites.update()
-        inventory_sprites.update()
         land.update()
+        inventory_sprites.update()
+        if check_weapon:
+            uweapon.podobr()
+            check_weapon = False
         # Рендеринг
         screen.blit(background, background_rect)
         camera.update(player)
@@ -636,12 +651,13 @@ while running:
             camera.apply(sprite)
         for sprite in inventory_sprites:
             camera.update(sprite)
+        for sprite in drop_sprites:
+            camera.apply(sprite)
         oven_sprites.draw(screen)
         land.draw(screen)
         seller_sprites.draw(screen)
         all_sprites.draw(screen)
         inventory_sprites.draw(screen)
-
     else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -658,13 +674,13 @@ while running:
                             player.rect.centery += 400
                 elif event.key == pygame.K_e:
                     if player.rect.centerx - 100 < chest.rect.centerx < player.rect.centerx + 100:
-                        if player.rect.centery - 100 < chest.rect.centery < player.rect.centery + 100:
+                        print(1)
+                        if chest.rect.centery - 50 <= player.rect.centery <= chest.rect.centery + 50:
+                            print(0)
                             give_drop()
                             drop = True
                 elif event.key == pygame.K_f:
                     if drop:
-                        print(222222)
-                        print('hheheheyh')
                         check_weapon = True
                         inventory_sprites.update()
             elif event.type == pygame.USEREVENT + 5:
@@ -696,7 +712,6 @@ while running:
         all_sprites.draw(screen)
         inventory_sprites.draw(screen)
         drop_sprites.draw(screen)
-
     pygame.display.flip()
-
 pygame.quit()
+e
